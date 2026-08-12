@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "accessWidener": "accesswidener",
+  "id": "astralvisuals",
+  "version": "1.2",
+  "icon": "assets/minecraft/icon.png",
+  "name": "AstralVisuals",
+  "description": "AstralVisuals",
+  "authors": [
+    "nezerit0v",
+    "dophyxzz"
+  ],
+  "contact": {
+    "website": "none",
+    "repo": "none"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "pl.astralvisuals.Force"
+    ]
+  },
+  "mixins": [
+    "mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "\u003e\u003d0.16.8",
+    "fabric": "*",
+    "minecraft": "~1.21.4"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/jna-5.13.0.jar"
+    },
+    {
+      "file": "META-INF/jars/jna-platform-5.13.0.jar"
+    }
+  ]
+}

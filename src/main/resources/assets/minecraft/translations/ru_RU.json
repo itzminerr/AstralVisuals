@@ -1,0 +1,27 @@
+{
+  "pivko": "",
+  "astralvisuals.hud.watermark": "Водяной знак",
+  "astralvisuals.hud.hotkeys": "Горячие клавиши",
+  "astralvisuals.hud.inventory": "Инвентарь",
+  "astralvisuals.hud.potions": "Эффекты",
+  "astralvisuals.hud.notifications": "Уведомления",
+  "astralvisuals.hud.target": "Таргет худ",
+  "astralvisuals.hud.cooldowns": "Перезарядки",
+  "astralvisuals.example.module": "Пример модуля",
+  "astralvisuals.example.effect": "Пример эффекта",
+  "astralvisuals.example.notification": "Пример уведомления",
+  "astralvisuals.target.distance": "Расстояние: ",
+  "astralvisuals.target.health": "Здоровье",
+  "gui.done": "Готово",
+  "gui.back": "Назад",
+  "gui.cancel": "Отмена",
+  "gui.ok": "ОК",
+  "menu.options": "Параметры...",
+  "menu.quit": "Выход",
+  "menu.singleplayer": "Одиночная игра",
+  "menu.multiplayer": "Мультиплеер",
+  "menu.minecraft.realms": "Minecraft Realms",
+  "language.name": "Русский",
+  "language.region": "Россия"
+}
+

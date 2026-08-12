@@ -1,0 +1,29 @@
+AstralVisuals
+Copyright (c) 2026 AstralVisuals contributors
+
+All rights reserved.
+
+Permission is NOT granted to redistribute, sublicense, or sell this software
+or substantial portions of it without the express written consent of the
+copyright holders. This source is published for reference and educational
+purposes.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+----------------------------------------------------------------------------
+Third-party components
+
+This project bundles and/or derives from third-party software that is covered
+by its own license terms:
+
+  * Crystal Optimizer logic is derived from Marlow's Crystal Optimizer.
+    See: src/main/resources/LICENSE_MarlowsCrystalOptimizer
+
+  * Java Native Access (JNA) 5.13.0 — Apache License 2.0 / LGPL 2.1.
+    Bundled under: src/main/resources/META-INF/jars/

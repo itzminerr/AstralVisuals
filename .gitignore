@@ -1,0 +1,27 @@
+# Build output
+.gradle/
+build/
+out/
+run/
+
+# Compiled / logs
+*.class
+*.log
+crash-reports/
+logs/
+_analysis/
+
+# Jars (keep the Gradle wrapper and the bundled runtime jars)
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!src/main/resources/META-INF/jars/*.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Local config
+config/

@@ -1,0 +1,22 @@
+{
+  "vertex": "minecraft:core/hands/fullscreen",
+  "fragment": "minecraft:core/hands/hands_composite",
+  "samplers": [
+    { "name": "Sampler0" }
+  ],
+  "uniforms": [
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+    { "name": "TexelSize", "type": "float", "count": 2, "values": [0.00052, 0.00093] },
+    { "name": "Color1", "type": "float", "count": 3, "values": [0.49, 0.35, 1.0] },
+    { "name": "Color2", "type": "float", "count": 3, "values": [0.27, 0.82, 1.0] },
+    { "name": "Time", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "WaveSpeed", "type": "float", "count": 1, "values": [1.2] },
+    { "name": "WaveScale", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Outline", "type": "float", "count": 1, "values": [1.2] },
+    { "name": "Glow", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Fill", "type": "float", "count": 1, "values": [0.6] },
+    { "name": "Alpha", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Mode", "type": "float", "count": 1, "values": [0.0] }
+  ]
+}
