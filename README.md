@@ -1,11 +1,7 @@
 # AstralVisuals
 
-A client-side **visual & utility mod for Minecraft 1.21.4**, built on the
-[Fabric](https://fabricmc.net/) toolchain. AstralVisuals adds a custom ClickGUI,
-a configurable HUD, render tweaks, and a set of quality-of-life modules.
+A client-side **visual & utility mod for Minecraft 1.21.4**
 
-> Built against **intermediary** mappings (no Yarn at runtime), so it ships as a
-> single self-contained Fabric mod.
 
 ---
 
