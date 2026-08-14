@@ -1,53 +1,110 @@
 # AstralVisuals
 
-A client-side **visual & utility mod for Minecraft 1.21.4**
+AstralVisuals is a client-side visual and utility mod for **Minecraft 1.21.4**, built with [Fabric](https://fabricmc.net/). Version **1.2** includes 40 configurable modules, a searchable ClickGUI, a movable HUD, chat commands, waypoints, macros, an offline account manager, custom shaders, sounds, and cosmetics.
 
+The project uses intermediary mappings. JNA and Satin are bundled in the built mod; Fabric Loader and Fabric API are required separately.
 
----
+## What's current in 1.2
+
+- Added **Cooldowns**, **World Tweaks**, **Waypoint ESP**, **Sky Shader**, and **Hand Shader**.
+- Expanded **Interface** with HUD scaling, notifications, sounds, and visual settings.
+- Consolidated spheres, halo, body trail, and custom capes under **Cosmetic**.
+- Removed outdated standalone `Hud` and `Trails` entries from the documentation; their current equivalents are **Interface** and **Cosmetic**.
+- Updated the documented artifact from `astralvisuals-1.1.jar` to `astralvisuals-1.2.jar`.
 
 ## Features
 
-A non-exhaustive overview of the included modules:
+The list below matches the modules currently registered by the client.
 
-### Render
-- **ClientColor** — animate between 2–3 color stops with adjustable speed; syncs global accent to GUI & modules
-- **Predictions** — trajectory visualization for arrows, tridents, ender pearls, and potions
-- **Particles** — custom particle effects (spark, star, heart, dollar, snowflake) with physics & trails
-- **HitColor** — change hit entity color with per-setting sync to ClientColor
-- **HitEffect** — wave ripple effect on block surfaces when attacking
-- **SelfNametag** — render your own nametag above head
-- **BetterMinecraft** — acrylic dark GUI with custom-styled buttons & sliders
-- **Custom Hitbox** — recolor entity hitboxes, hide sight line / eye box; "only players" mode
-- **TargetESP** — highlight your current target
-- **CrossHair** — fully configurable crosshair
-- **Hud** — movable, rounded on-screen HUD elements
-- **BlockOverlay**, **NoRender** (with effect particles support)
-- **Camera**, **SwingAnimation**, **ViewModel**, **AspectRatio**
-- **ChinaHat**, **JumpCircle**, **KillEffect**, **MotionBlur**, **Cosmetic**
+### Render modules
 
-### Player / Movement
-- **AutoDuel** — auto-accept duel challenges
-- **AutoRespawn** — automatically respawn after death
-- **ItemSwap** — swap to specified hotbar slot on condition
-- **LockSlot** — lock hotbar slot to prevent accidental swaps
-- **TapeMouse** — auto-attack on crosshair hover with configurable delay
-- **Trails** — render particle trails on player movement
-- **AutoSprint**, **FreeLook**, **FakePlayer**
-- **ClickPearl**, **CrystalOptimizer**, **ItemScroller**, **CardChecker**
+- **Aspect Ratio** — overrides the rendered aspect ratio.
+- **Better Minecraft** — restyles vanilla screens, buttons, and sliders.
+- **Block Overlay** — configurable block selection fill, outline, and shader effects.
+- **Camera** — adjusts third-person distance and adds configurable zoom.
+- **China Hat** — renders a customizable hat for the player and friends.
+- **Client Color** — provides static or animated two/three-color accents shared by the GUI and modules.
+- **Cosmetic** — configurable spheres, halo, body trail, and local PNG capes.
+- **Crosshair** — replaces the vanilla crosshair with a configurable design and attack indicator.
+- **Custom Hitbox** — recolors entity hitboxes with player/friend filters and optional sight/eye boxes.
+- **Hand Shader** — applies configurable wave, outline, glow, fill, and color effects to first-person hands.
+- **Hit Color** — changes the damage overlay color and opacity.
+- **Hit Effect** — draws a configurable wave effect on attacked block surfaces.
+- **Interface** — controls the accent color, HUD and GUI scale, notifications, and interface sounds.
+- **Jump Circle** — renders animated circles below jumping players.
+- **Kill Effect** — adds visual and sound effects when an entity dies, including custom sounds.
+- **Motion Blur** — configurable post-processing motion blur with refresh-rate scaling.
+- **No Render** — hides selected overlays, weather, particles, and other visual distractions.
+- **Particles** — custom hit and world particles with selectable sprites, physics, and trails.
+- **Predictions** — renders trajectories for arrows, tridents, ender pearls, and potions.
+- **Self Nametag** — renders the local player's nametag in third person.
+- **Sky Shader** — applies animated custom shader effects to the sky.
+- **Swing Animation** — changes first-person swing style, speed, and strength.
+- **Target ESP** — highlights the current target with configurable effects and colors.
+- **View Model** — independently changes the position and scale of both hands.
+- **Waypoint ESP** — renders waypoint beams, markers, names, and distances in the world.
+- **World Tweaks** — controls brightness, world time, fog distance, and fog color.
 
-### Misc
-- **DiscordPresence** — Discord Rich Presence integration
+### Player and utility modules
 
-All modules are configured through the in-game ClickGUI and persisted to a
-local config file.
+- **Auto Duel** — automatically handles supported duel requests.
+- **Auto Respawn** — respawns automatically after death.
+- **Auto Sprint** — keeps the player sprinting according to the selected conditions.
+- **Card Checker** — detects and marks configured entities/carts in the world.
+- **Click Pearl** — throws an ender pearl from a bound key and can switch back afterward.
+- **Cooldowns** — shows server cooldown timers over hotbar and inventory items.
+- **Crystal Optimizer** — improves end-crystal interaction handling.
+- **Discord RPC** — displays configurable Rich Presence information in Discord.
+- **Fake Player** — spawns a local practice player at a configurable distance.
+- **Free Look** — lets the camera rotate independently from the player.
+- **Item Scroller** — streamlines moving matching items through inventory slots.
+- **Item Swap** — switches to a configured hotbar slot when its condition is met.
+- **Lock Slot** — prevents accidental changes to a selected hotbar slot.
+- **Tape Mouse** — automatically clicks while its crosshair and delay conditions are met.
 
----
+## Interface and HUD
+
+The ClickGUI includes module search, categories, key binds, color presets, grouped settings, sliders, text inputs, single-select and multi-select controls. Its default key is **Right Shift** and it can be changed with the `bind set clickgui` command.
+
+The movable HUD contains:
+
+- Watermark
+- Target HUD
+- Potions
+- Hotkeys
+- Inventory
+- Notifications
+- Coordinates
+- Waypoints
+
+The main menu also includes an offline account manager. The active launcher account is imported automatically when possible.
+
+## Commands
+
+The default command prefix is `.`. Available commands are:
+
+- `.help` — list commands or show command help.
+- `.bind` — manage module binds and the ClickGUI key.
+- `.config` — save, load, list, or remove configurations.
+- `.friend` — manage the friend list.
+- `.macro` — create and manage key-bound chat macros.
+- `.way` — create and manage server-specific waypoints.
+- `.prefix` — change the command prefix.
+
+Configuration data is stored under `AstralVisuals/Files`. Custom capes and kill sounds belong in `AstralVisuals/Custom/Capes` and `AstralVisuals/Custom/KillSounds`.
+
+## Installing
+
+1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft **1.21.4**.
+2. Install [Fabric API](https://modrinth.com/mod/fabric-api).
+3. Place `astralvisuals-1.2.jar` in the Minecraft `mods` directory.
 
 ## Building
 
 Requirements:
-- **JDK 21**
-- The Gradle wrapper (included)
+
+- JDK 21
+- The included Gradle wrapper
 
 ```bash
 # Windows
@@ -57,53 +114,39 @@ gradlew.bat build
 ./gradlew build
 ```
 
-The built mod jar is written to `build/libs/astralvisuals-1.1.jar`.
+The built mod is written to `build/libs/astralvisuals-1.2.jar`.
 
-## Running (dev)
+For a development client:
 
 ```bash
 ./gradlew runClient
 ```
 
-## Installing
-
-1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft **1.21.4**.
-2. Install [Fabric API](https://modrinth.com/mod/fabric-api).
-3. Drop `astralvisuals-1.1.jar` into your `mods/` folder.
-
----
-
 ## Project layout
 
-```
+```text
 src/main/java/pl/astralvisuals/
-├── commands/      chat command framework
-├── common/        animations, localization, repositories
-├── display/       ClickGUI, HUD, screens
-├── events/        event bus & listeners
-├── features/      modules + settings
-├── main/          mod entrypoint & listeners
-├── mixins/        Mixin injections (intermediary, remap = false)
-└── utils/         rendering, math, player, client helpers
+|-- commands/      chat commands and argument parsing
+|-- common/        animations, localization, and repositories
+|-- display/       ClickGUI, HUD, main menu, and account manager
+|-- events/        event definitions
+|-- features/      modules and settings
+|-- main/          client information and listeners
+|-- mixins/        Minecraft injections
+`-- utils/         rendering, shaders, math, player, and client helpers
 src/main/resources/
-├── assets/        textures, fonts, shaders, sounds, panorama
-├── META-INF/jars/ bundled runtime jars (JNA)
-├── mixins.json    mixin config
-└── accesswidener  access widener
+|-- assets/        textures, fonts, shaders, sounds, and panorama
+|-- META-INF/jars/ bundled JNA runtime libraries
+|-- mixins.json    Mixin configuration
+`-- accesswidener  access widener
 ```
 
-> **Note on mixins:** the build runs with `-proc:none`, so the Mixin
-> annotation processor does not regenerate the refmap. New mixins must target
-> **intermediary** names directly with `remap = false`, and the static
-> `AstralVisuals-refmap.json` is maintained by hand.
-
----
+> The build uses `-proc:none`. Mixins target intermediary names with `remap = false`, and the static `AstralVisuals-refmap.json` is maintained manually.
 
 ## Contributors
 
-- **[itzminerr](https://github.com/itzminerr)**
+- [itzminerr](https://github.com/itzminerr)
 
 ## License
 
-See [LICENSE](LICENSE). All rights reserved — published for reference and
-educational purposes. Bundled third-party components retain their own licenses.
+See [LICENSE](LICENSE). All rights reserved; the source is published for reference and educational purposes. Bundled third-party components retain their own licenses.
