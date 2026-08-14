@@ -57,9 +57,7 @@ AstralVisuals это визуальный и утилитарный мод дл�
 - **Lock Slot** — блокирует выбранные слоты хотбара.
 - **Tape Mouse** — настраиваемый автокликер.
 
-## GUI и HUD
-
-HUD:
+## HUD
 
 - Watermark (Водяной знак)
 - Target HUD (HUD Цели)
