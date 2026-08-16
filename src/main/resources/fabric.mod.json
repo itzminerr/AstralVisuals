@@ -15,7 +15,7 @@
     "repo": "https://github.com/itzminerr/AstralVisuals"
   },
   "license": "All-Rights-Reserved",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "main": [
       "pl.astralvisuals.Force"

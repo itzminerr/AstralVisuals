@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import pl.astralvisuals.events.render.AspectRatioEvent;
 import pl.astralvisuals.events.render.FovEvent;
 import pl.astralvisuals.events.render.WorldRenderEvent;
+import pl.astralvisuals.features.impl.movement.TapeMouse;
 import pl.astralvisuals.features.impl.render.HitColor;
 import pl.astralvisuals.features.impl.render.NoRender;
 import pl.astralvisuals.utils.client.interfaces.IOverlayTexture;
@@ -82,6 +83,16 @@ public abstract class GameRendererMixin {
       HitColor hitColor = HitColor.getInstance();
       int hurtColor = hitColor != null && hitColor.isState() ? hitColor.getColor() : 0xB2FF0000;
       ((IOverlayTexture)(Object)this.field_20949).astral$applyHitColor(hurtColor);
+   }
+
+   @ModifyExpressionValue(
+      method = "method_3192",
+      at = @At(value = "FIELD", target = "Lnet/minecraft/class_315;field_1837:Z", opcode = 180, remap = false),
+      remap = false
+   )
+   private boolean astral$keepTapeMouseRunningWithoutFocus(boolean pauseOnLostFocus) {
+      TapeMouse tapeMouse = TapeMouse.getInstance();
+      return pauseOnLostFocus && (tapeMouse == null || !tapeMouse.isState());
    }
 
    @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)

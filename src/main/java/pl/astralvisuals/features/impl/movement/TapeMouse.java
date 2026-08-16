@@ -35,7 +35,7 @@ public class TapeMouse extends Module {
 
    @EventHandler
    public void onTick(TickEvent e) {
-      if (mc.field_1724 == null || mc.field_1687 == null || mc.field_1724.method_6115()) {
+      if (mc.field_1724 == null || mc.field_1687 == null || mc.field_1755 != null || mc.method_18506() != null || mc.field_1724.method_6115()) {
          return;
       }
 

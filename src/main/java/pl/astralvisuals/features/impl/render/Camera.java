@@ -67,7 +67,7 @@ public class Camera extends Module {
       e.setCameraClip(false);
       e.setDistance(this.distanceSetting.getValue());
       FreeLook freeLook = Instance.get(FreeLook.class);
-      if (!freeLook.isState() || !PlayerInteractionHelper.isKey(FreeLook.freeLookSetting)) {
+      if (!freeLook.isState() || !freeLook.isHeld()) {
          e.setAngle(MathAngle.cameraAngle());
       }
 

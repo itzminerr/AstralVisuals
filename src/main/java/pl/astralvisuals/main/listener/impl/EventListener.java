@@ -4,7 +4,6 @@ import net.minecraft.class_1309;
 import net.minecraft.class_2848;
 import net.minecraft.class_2868;
 import pl.astralvisuals.Force;
-import pl.astralvisuals.common.repository.friend.FriendUtils;
 import pl.astralvisuals.events.packet.PacketEvent;
 import pl.astralvisuals.events.player.AttackEvent;
 import pl.astralvisuals.events.player.TickEvent;
@@ -47,12 +46,8 @@ public class EventListener implements Listener {
 
    @EventHandler
    public void onAttack(AttackEvent e) {
-      if (FriendUtils.isFriend(e.getEntity())) {
-         e.setCancelled(true);
-      } else {
-         if (e.getEntity() instanceof class_1309 livingEntity) {
-            TargetTracker.setTarget(livingEntity);
-         }
+      if (e.getEntity() instanceof class_1309 livingEntity) {
+         TargetTracker.setTarget(livingEntity);
       }
    }
 }
