@@ -36,8 +36,8 @@ dependencies {
 	mappings "net.fabricmc:intermediary:${project.minecraft_version}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	implementation "net.java.dev.jna:jna:5.13.0"
-	implementation "net.java.dev.jna:jna-platform:5.13.0"
+	implementation "net.java.dev.jna:jna:5.15.0"
+	implementation "net.java.dev.jna:jna-platform:5.15.0"
 
 	// Satin — managed post-effect shaders (for Motion Blur). Bundled via JiJ so the standalone jar works.
 	modImplementation "org.ladysnake:satin:3.0.0-alpha.1"
@@ -47,7 +47,9 @@ dependencies {
 sourceSets {
 	installer {
 		java.srcDir "src/installer/java"
-		resources.srcDirs = []
+		resources.srcDirs = ["src/installer/resources"]
+		compileClasspath += sourceSets.main.compileClasspath
+		runtimeClasspath += sourceSets.main.runtimeClasspath
 	}
 	test {
 		compileClasspath += sourceSets.installer.output
@@ -63,6 +65,14 @@ processResources {
 	}
 }
 
+tasks.named("processInstallerResources") {
+	def version = project.version
+	inputs.property "version", version
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
 	it.options.encoding = "UTF-8"
@@ -71,16 +81,23 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.register("installerJar", Jar) {
 	group = "build"
-	description = "Builds the standalone cross-platform pre-launch updater"
-	dependsOn tasks.named("installerClasses")
+	description = "Builds the zero-configuration Fabric updater placed in mods"
+	dependsOn tasks.named("installerClasses"), tasks.named("remapJar")
 	from sourceSets.installer.output
+	from({ zipTree(tasks.named("remapJar").get().archiveFile.get().asFile) }) {
+		include "accesswidener"
+		include "META-INF/jars/satin-*.jar"
+	}
+	from("LICENSE") {
+		rename { "LICENSE_AstralVisuals-Installer" }
+	}
 	archiveFileName = "astralinstaller.jar"
 	destinationDirectory = layout.projectDirectory
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	preserveFileTimestamps = false
 	reproducibleFileOrder = true
 	manifest {
 		attributes(
-			"Main-Class": "pl.astralvisuals.installer.AstralInstaller",
 			"Implementation-Title": "AstralVisuals Installer",
 			"Implementation-Version": project.version
 		)
@@ -97,10 +114,61 @@ tasks.named("compileTestJava") {
 
 tasks.register("installerSmokeTest", JavaExec) {
 	group = "verification"
-	description = "Tests the standalone installer against the live GitHub Release"
-	dependsOn tasks.named("compileTestJava")
+	description = "Tests the Fabric installer artifact against the live GitHub Release"
+	dependsOn tasks.named("compileTestJava"), tasks.named("installerJar")
 	classpath = sourceSets.test.runtimeClasspath
 	mainClass = "pl.astralvisuals.installer.AstralInstallerSmokeTest"
+}
+
+tasks.register("installerIntegrationClient", JavaExec) {
+	group = "verification"
+	description = "Launches an isolated development client with only astralinstaller.jar in mods"
+	dependsOn tasks.named("installerJar"), tasks.named("jar"), tasks.named("downloadAssets"), tasks.named("generateRemapClasspath")
+
+	def integrationRoot = layout.buildDirectory.dir("installer-integration")
+	def gameDirectory = integrationRoot.map { it.dir("run") }
+	def launchConfig = integrationRoot.map { it.file("launch.cfg") }
+	workingDir gameDirectory
+	classpath = sourceSets.main.runtimeClasspath
+		.filter { !it.name.startsWith("satin-") }
+		.minus(sourceSets.main.output)
+	mainClass = "net.fabricmc.devlaunchinjector.Main"
+
+	doFirst {
+		def gameDirFile = gameDirectory.get().asFile
+		def modsDir = new File(gameDirFile, "mods")
+		def cacheDir = new File(gameDirFile, ".astralinstaller")
+		modsDir.mkdirs()
+		cacheDir.mkdirs()
+		copy {
+			from tasks.named("installerJar").get().archiveFile
+			into modsDir
+		}
+		copy {
+			from tasks.named("jar").get().archiveFile
+			into cacheDir
+			rename { "client.jar" }
+		}
+
+		def configFile = launchConfig.get().asFile
+		configFile.parentFile.mkdirs()
+		configFile.text = """commonProperties
+	fabric.development=true
+	fabric.remapClasspathFile=${file(".gradle/loom-cache/remapClasspath.txt").absolutePath}
+	log4j.configurationFile=${file(".gradle/loom-cache/log4j.xml").absolutePath}
+	log4j2.formatMsgNoLookups=true
+clientArgs
+	--assetIndex
+	1.21.4-19
+	--assetsDir
+	${new File(gradle.gradleUserHomeDir, "caches/fabric-loom/assets").absolutePath}
+"""
+		systemProperty "fabric.dli.config", configFile.absolutePath
+		systemProperty "fabric.dli.env", "client"
+		systemProperty "fabric.dli.main", "net.fabricmc.loader.impl.launch.knot.KnotClient"
+		systemProperty "astralinstaller.releaseApi", "http://127.0.0.1:1/releases/latest"
+		args "--gameDir", gameDirFile.absolutePath, "--username", "AstralTest", "--accessToken", "0", "--version", "1.21.4", "--userType", "legacy", "--versionType", "release"
+	}
 }
 
 tasks.register("soundOggSmokeTest", JavaExec) {

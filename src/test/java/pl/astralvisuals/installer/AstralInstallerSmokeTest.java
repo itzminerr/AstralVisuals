@@ -1,17 +1,15 @@
 package pl.astralvisuals.installer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
-/** Integration check for the standalone pre-launch installer. */
+/** Integration checks for the Fabric pre-launch installer and its live GitHub update path. */
 public final class AstralInstallerSmokeTest {
    private AstralInstallerSmokeTest() {
    }
@@ -21,9 +19,9 @@ public final class AstralInstallerSmokeTest {
       try {
          testVersionComparison();
          testReleaseParsing();
-         testPrismDirectoryResolution(testDirectory);
+         testFabricArtifact(Path.of("astralinstaller.jar").toAbsolutePath().normalize());
          testLiveInstallAndNoUpdate(testDirectory);
-         testOfflineFallback(testDirectory);
+         testOfflineCacheSafety(testDirectory);
          System.out.println("ASTRAL INSTALLER SMOKE TEST PASSED");
       } finally {
          deleteRecursively(testDirectory);
@@ -31,7 +29,7 @@ public final class AstralInstallerSmokeTest {
    }
 
    private static void testVersionComparison() {
-      require(AstralInstaller.compareVersions("v2.3", "2.2") > 0, "version increment was not detected");
+      require(AstralInstaller.compareVersions("v2.4", "2.3") > 0, "version increment was not detected");
       require(AstralInstaller.compareVersions("2.2", "v2.2") == 0, "v prefix changed equality");
       require(AstralInstaller.compareVersions("2.2.1", "2.2") > 0, "patch comparison failed");
       require(AstralInstaller.compareVersions("2.2-beta", "2.2") < 0, "pre-release must be older than stable");
@@ -44,7 +42,7 @@ public final class AstralInstallerSmokeTest {
            "tag_name": "v9.4",
            "assets": [
              {"name":"astralinstaller.jar","browser_download_url":"https://github.com/itzminerr/AstralVisuals/releases/download/v9.4/astralinstaller.jar"},
-             {"uploader":{"login":"test"},"digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","name":"astralvisuals-9.4.jar","browser_download_url":"https://github.com/itzminerr/AstralVisuals/releases/download/v9.4/astralvisuals-9.4.jar"}
+             {"digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","name":"astralvisuals-9.4.jar","browser_download_url":"https://github.com/itzminerr/AstralVisuals/releases/download/v9.4/astralvisuals-9.4.jar"}
            ]
          }
          """;
@@ -55,61 +53,73 @@ public final class AstralInstallerSmokeTest {
       System.out.println("[OK] Dependency-free GitHub JSON parsing");
    }
 
-   private static void testPrismDirectoryResolution(Path testDirectory) {
-      Path minecraftDirectory = testDirectory.resolve("Prism Instance").resolve(".minecraft");
-      Path resolved = AstralInstaller.resolveModsDirectory(null, Map.of("INST_MC_DIR", minecraftDirectory.toString()), testDirectory);
-      require(resolved.equals(minecraftDirectory.resolve("mods").toAbsolutePath().normalize()), "INST_MC_DIR was not honored");
-      Path explicit = testDirectory.resolve("custom mods");
-      require(
-         AstralInstaller.resolveModsDirectory(explicit, Map.of("INST_MC_DIR", minecraftDirectory.toString()), testDirectory)
-            .equals(explicit.toAbsolutePath().normalize()),
-         "explicit mods directory did not take precedence"
-      );
-      System.out.println("[OK] PrismLauncher and explicit mods directory resolution");
+   private static void testFabricArtifact(Path installer) throws Exception {
+      require(Files.isRegularFile(installer), "astralinstaller.jar was not built");
+      try (JarFile jar = new JarFile(installer.toFile())) {
+         String metadata = readEntry(jar, "fabric.mod.json");
+         require(metadata.contains("\"id\": \"astralinstaller\""), "installer has the wrong Fabric mod id");
+         require(metadata.contains("\"preLaunch\""), "installer has no preLaunch entrypoint");
+         require(metadata.contains("\"main\""), "installer has no normal initialization entrypoint");
+         require(readEntry(jar, "accesswidener").startsWith("accessWidener\tv1\tintermediary"), "access widener was not remapped");
+         require(jar.getJarEntry("META-INF/jars/satin-3.0.0-alpha.1.jar") != null, "Satin runtime is missing");
+         require(jar.getJarEntry("META-INF/jars/jna-5.13.0.jar") == null, "obsolete JNA conflicts with Minecraft 1.21.4");
+         require(jar.getJarEntry("pl/astralvisuals/Force.class") == null, "installer accidentally contains the client payload");
+      }
+      System.out.println("[OK] astralinstaller.jar is a self-contained Fabric pre-launch mod");
    }
 
    private static void testLiveInstallAndNoUpdate(Path testDirectory) throws Exception {
-      Path modsDirectory = testDirectory.resolve("live").resolve("mods");
-      Files.createDirectories(modsDirectory);
-      createClientJar(modsDirectory.resolve("astralvisuals-0.1.jar"), "0.1");
-      createClientJar(modsDirectory.resolve("astralvisuals-0.2.jar"), "0.2");
+      Path cache = testDirectory.resolve("live-cache");
+      Files.createDirectories(cache);
+      createClientJar(cache.resolve("client.jar"), "0.1");
 
-      AstralInstaller.UpdateResult installed = AstralInstaller.update(modsDirectory, AstralInstaller.LATEST_RELEASE);
-      require(installed.updated(), "live GitHub client was not installed");
-      require("0.2".equals(installed.previousVersion()), "newest installed version was not selected");
-      require(Files.isRegularFile(installed.installedPath()), "downloaded client is missing");
-      require(AstralInstaller.discoverClientJars(modsDirectory).size() == 1, "old client versions were not removed");
+      AstralInstaller.UpdateResult installed = AstralInstaller.update(cache, AstralInstaller.LATEST_RELEASE);
+      require(installed.updated(), "live GitHub client was not downloaded");
+      require(Files.isRegularFile(installed.client().path()), "downloaded client is missing");
+      AstralInstaller.verifyClientJar(installed.client().path(), installed.client().version());
 
-      AstralInstaller.UpdateResult repeated = AstralInstaller.update(modsDirectory, AstralInstaller.LATEST_RELEASE);
+      AstralInstaller.UpdateResult repeated = AstralInstaller.update(cache, AstralInstaller.LATEST_RELEASE);
       require(!repeated.updated(), "current release was downloaded twice");
-      require(installed.version().equals(repeated.version()), "installed version changed during the second check");
-      System.out.println("[OK] Live GitHub install before launch and no-op second check: " + installed.version());
+      require(installed.client().version().equals(repeated.client().version()), "cached version changed during the second check");
+      System.out.println("[OK] Live GitHub update and same-launch cache: " + installed.client().version());
    }
 
-   private static void testOfflineFallback(Path testDirectory) throws Exception {
-      Path modsDirectory = testDirectory.resolve("offline").resolve("mods");
-      Files.createDirectories(modsDirectory);
-      createClientJar(modsDirectory.resolve("astralvisuals-1.0.jar"), "1.0");
-      ByteArrayOutputStream output = new ByteArrayOutputStream();
-      ByteArrayOutputStream errors = new ByteArrayOutputStream();
-      int exit = AstralInstaller.run(
-         new String[] {"--mods-dir", modsDirectory.toString()},
-         Map.of("ASTRAL_RELEASE_API", "http://127.0.0.1:1/releases/latest"),
-         testDirectory,
-         new PrintStream(output, true, StandardCharsets.UTF_8),
-         new PrintStream(errors, true, StandardCharsets.UTF_8)
-      );
-      require(exit == 0, "an installed client must remain launchable when GitHub is unavailable");
-      require(AstralInstaller.discoverClientJars(modsDirectory).size() == 1, "offline fallback modified the installed client");
-      System.out.println("[OK] Existing client remains safe when an update check cannot replace it");
+   private static void testOfflineCacheSafety(Path testDirectory) throws Exception {
+      Path cache = testDirectory.resolve("offline-cache");
+      Files.createDirectories(cache);
+      Path client = cache.resolve("client.jar");
+      createClientJar(client, "1.0");
+      boolean failed = false;
+      try {
+         AstralInstaller.update(cache, URI.create("http://127.0.0.1:1/releases/latest"));
+      } catch (Exception expected) {
+         failed = true;
+      }
+      require(failed, "offline update unexpectedly succeeded");
+      require("1.0".equals(AstralInstaller.verifyClientJar(client, null).version()), "offline check damaged the cache");
+      System.out.println("[OK] Existing cached client survives an unavailable GitHub API");
+   }
+
+   private static String readEntry(JarFile jar, String name) throws Exception {
+      JarEntry entry = jar.getJarEntry(name);
+      require(entry != null, name + " is missing");
+      try (var input = jar.getInputStream(entry)) {
+         return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+      }
    }
 
    private static void createClientJar(Path path, String version) throws Exception {
       try (JarOutputStream output = new JarOutputStream(Files.newOutputStream(path))) {
-         output.putNextEntry(new JarEntry("fabric.mod.json"));
-         output.write(("{\"schemaVersion\":1,\"id\":\"astralvisuals\",\"version\":\"" + version + "\"}").getBytes(StandardCharsets.UTF_8));
-         output.closeEntry();
+         writeEntry(output, "fabric.mod.json", "{\"schemaVersion\":1,\"id\":\"astralvisuals\",\"version\":\"" + version + "\"}");
+         writeEntry(output, "mixins.json", "{}");
+         writeEntry(output, "pl/astralvisuals/Force.class", "test");
       }
+   }
+
+   private static void writeEntry(JarOutputStream output, String name, String contents) throws Exception {
+      output.putNextEntry(new JarEntry(name));
+      output.write(contents.getBytes(StandardCharsets.UTF_8));
+      output.closeEntry();
    }
 
    private static void require(boolean condition, String message) {
