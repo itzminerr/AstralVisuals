@@ -17,11 +17,12 @@ public class Interface extends Module {
    public static final String ELEMENT_NOTIFICATIONS = "Уведомления";
    public static final String ELEMENT_COORDINATES = "Координаты";
    public static final String ELEMENT_WAYPOINTS = "Вейпоинты";
+   public static final String ELEMENT_MEDIA_PLAYER = "Медиа-плеер";
    public static final String NOTIFICATION_MODULES = "Переключение модулей";
 
    public final MultiSelectSetting interfaceSettings = new MultiSelectSetting("Элементы", "Элементы интерфейса")
       .value(ELEMENT_WATERMARK, ELEMENT_HOTKEYS, ELEMENT_EFFECTS, ELEMENT_INVENTORY, ELEMENT_TARGET_HUD,
-         ELEMENT_NOTIFICATIONS, ELEMENT_COORDINATES, ELEMENT_WAYPOINTS)
+         ELEMENT_NOTIFICATIONS, ELEMENT_COORDINATES, ELEMENT_WAYPOINTS, ELEMENT_MEDIA_PLAYER)
       .selected(ELEMENT_WATERMARK, ELEMENT_HOTKEYS, ELEMENT_EFFECTS, ELEMENT_INVENTORY,
          ELEMENT_NOTIFICATIONS, ELEMENT_COORDINATES, ELEMENT_WAYPOINTS);
    public final MultiSelectSetting notificationSettings = new MultiSelectSetting("Уведомления", "Когда показывать уведомления")

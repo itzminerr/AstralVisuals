@@ -4,7 +4,6 @@ public enum ModuleCategory {
    COMBAT("Бой"),
    RENDER("Рендер"),
    PLAYER("Игрок"),
-   MISC("Разное"),
    CONFIGS("Конфиги");
 
    final String readableName;

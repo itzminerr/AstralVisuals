@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.astralvisuals.events.render.CameraEvent;
 import pl.astralvisuals.events.render.CameraPositionEvent;
+import pl.astralvisuals.features.impl.render.BabyMod;
 import pl.astralvisuals.utils.client.managers.event.EventManager;
 import pl.astralvisuals.utils.player.rotation.Turns;
 
@@ -43,6 +44,11 @@ public abstract class CameraMixin {
    private void updateHook(class_1922 area, class_1297 focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo ci) {
       CameraEvent event = new CameraEvent(false, 4.0F, new Turns(this.field_18718, this.field_18717));
       EventManager.callEvent(event);
+      BabyMod babyMod = BabyMod.getInstance();
+      if (babyMod != null && babyMod.shouldAdjustCamera(focusedEntity, thirdPerson)) {
+         this.field_18712 = this.field_18712.method_1031(0.0, -0.81, 0.0);
+         this.field_18713.method_10102(this.field_18712.field_1352, this.field_18712.field_1351, this.field_18712.field_1350);
+      }
       Turns angle = event.getAngle();
       if (event.isCancelled() && focusedEntity instanceof class_746 player && !player.method_6113() && thirdPerson) {
          float pitch = inverseView ? -angle.getPitch() : angle.getPitch();

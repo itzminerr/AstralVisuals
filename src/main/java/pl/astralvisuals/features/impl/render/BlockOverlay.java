@@ -9,6 +9,7 @@ import net.minecraft.class_10156;
 import net.minecraft.class_2338;
 import net.minecraft.class_238;
 import net.minecraft.class_2960;
+import net.minecraft.class_3532;
 import net.minecraft.class_265;
 import net.minecraft.class_286;
 import net.minecraft.class_287;
@@ -59,6 +60,13 @@ public class BlockOverlay extends Module {
       .setValue(2.0F).range(0.5F, 5.0F)
       .visible(() -> this.linesSetting.isValue());
 
+   private final BooleanSetting smoothTransition = new BooleanSetting("Плавный переход", "Плавно перемещать контур между блоками")
+      .setValue(true);
+
+   private final SliderSettings transitionTime = new SliderSettings("Время перехода", "Длительность перехода между блоками в секундах")
+      .setValue(0.18F).range(0.05F, 1.0F)
+      .visible(this.smoothTransition::isValue);
+
    // Настройки шейдера (отдельные от Sky Shader), видимы только в режиме «Шейдер».
    private final SelectSetting shaderMode = new SelectSetting("Режим шейдера", "Тип шейдера")
       .value(WATER, CAUSTIC)
@@ -86,6 +94,10 @@ public class BlockOverlay extends Module {
       .visible(() -> this.typeSetting.isSelected(SHADER));
 
    private long startMillis = -1L;
+   private class_2338 lastTargetPos;
+   private List<class_238> animationFromBoxes = List.of();
+   private List<class_238> animationToBoxes = List.of();
+   private long animationStartedAt;
 
    public static BlockOverlay getInstance() {
       return Instance.get(BlockOverlay.class);
@@ -93,7 +105,7 @@ public class BlockOverlay extends Module {
 
    public BlockOverlay() {
       super("BlockOverlay", "Block Overlay", ModuleCategory.RENDER);
-      this.setup(this.typeSetting, this.linesSetting, this.colorSetting, this.lineWidth,
+      this.setup(this.typeSetting, this.linesSetting, this.colorSetting, this.lineWidth, this.smoothTransition, this.transitionTime,
          this.shaderMode, this.shaderColor, this.speed, this.scale, this.intensity, this.alpha);
    }
 
@@ -101,6 +113,7 @@ public class BlockOverlay extends Module {
    public void deactivate() {
       super.deactivate();
       this.startMillis = -1L;
+      this.resetTransition();
    }
 
    @EventHandler
@@ -118,26 +131,113 @@ public class BlockOverlay extends Module {
       boolean lines = this.linesSetting.isValue();
 
       float width = this.lineWidth.getValue();
+      List<class_238> targetBoxes = shape.method_1090().stream().map(box -> box.method_996(pos)).toList();
+      this.updateTransition(pos, targetBoxes);
+      List<class_238> currentBoxes = this.currentBoxes(System.currentTimeMillis());
 
       if (this.typeSetting.isSelected(SHADER)) {
-         this.renderShaderFaces(pos, shape);
+         this.renderShaderFaces(currentBoxes);
          if (lines) {
-            Render3D.drawShapeAlternative(pos, shape, this.colorSetting.getColor(), width, false, true);
+            for (class_238 box : currentBoxes) {
+               Render3D.drawBox(box, this.colorSetting.getColor(), width, true, false, true);
+            }
          }
-      } else if (lines) {
-         // Заливка + линии (исходный вид Block Overlay).
-         Render3D.drawShapeAlternative(pos, shape, this.colorSetting.getColor(), width, true, true);
       } else {
-         // Только заливка, без линий.
-         List<class_238> boxes = shape.method_1090();
-         for (class_238 relative : boxes) {
-            Render3D.drawBox(relative.method_996(pos), this.colorSetting.getColor(), 2.0F, false, true, true);
+         for (class_238 box : currentBoxes) {
+            Render3D.drawBox(box, this.colorSetting.getColor(), lines ? width : 2.0F, lines, true, true);
          }
       }
    }
 
+   private void updateTransition(class_2338 position, List<class_238> boxes) {
+      long now = System.currentTimeMillis();
+      boolean changed = this.lastTargetPos == null || !this.lastTargetPos.equals(position) || !this.sameBoxes(this.animationToBoxes, boxes);
+      if (!this.smoothTransition.isValue()) {
+         this.lastTargetPos = position.method_10062();
+         this.animationFromBoxes = new java.util.ArrayList<>(boxes);
+         this.animationToBoxes = new java.util.ArrayList<>(boxes);
+         this.animationStartedAt = now;
+         return;
+      }
+      if (!changed) {
+         return;
+      }
+      this.animationFromBoxes = this.animationToBoxes.isEmpty() ? new java.util.ArrayList<>(boxes) : this.currentBoxes(now);
+      this.animationToBoxes = new java.util.ArrayList<>(boxes);
+      this.animationStartedAt = now;
+      this.lastTargetPos = position.method_10062();
+   }
+
+   private List<class_238> currentBoxes(long now) {
+      if (this.animationToBoxes.isEmpty() || !this.smoothTransition.isValue()) {
+         return this.animationToBoxes;
+      }
+      float duration = this.transitionTime.getValue();
+      if (duration <= 0.0F || this.animationFromBoxes.isEmpty()) {
+         return this.animationToBoxes;
+      }
+      float progress = class_3532.method_15363((now - this.animationStartedAt) / (duration * 1000.0F), 0.0F, 1.0F);
+      if (progress >= 1.0F) {
+         this.animationFromBoxes = this.animationToBoxes;
+         return this.animationToBoxes;
+      }
+      int size = Math.max(this.animationFromBoxes.size(), this.animationToBoxes.size());
+      List<class_238> result = new java.util.ArrayList<>(size);
+      class_238 fromFallback = this.combined(this.animationFromBoxes);
+      class_238 toFallback = this.combined(this.animationToBoxes);
+      for (int index = 0; index < size; index++) {
+         class_238 from = index < this.animationFromBoxes.size() ? this.animationFromBoxes.get(index) : fromFallback;
+         class_238 to = index < this.animationToBoxes.size() ? this.animationToBoxes.get(index) : toFallback;
+         if (from != null && to != null) {
+            result.add(this.lerp(from, to, progress));
+         }
+      }
+      return result;
+   }
+
+   private class_238 combined(List<class_238> boxes) {
+      if (boxes.isEmpty()) {
+         return null;
+      }
+      class_238 result = boxes.get(0);
+      for (int index = 1; index < boxes.size(); index++) {
+         result = result.method_991(boxes.get(index));
+      }
+      return result;
+   }
+
+   private class_238 lerp(class_238 from, class_238 to, float progress) {
+      return new class_238(
+         class_3532.method_16436(progress, from.field_1323, to.field_1323),
+         class_3532.method_16436(progress, from.field_1322, to.field_1322),
+         class_3532.method_16436(progress, from.field_1321, to.field_1321),
+         class_3532.method_16436(progress, from.field_1320, to.field_1320),
+         class_3532.method_16436(progress, from.field_1325, to.field_1325),
+         class_3532.method_16436(progress, from.field_1324, to.field_1324)
+      );
+   }
+
+   private boolean sameBoxes(List<class_238> first, List<class_238> second) {
+      if (first.size() != second.size()) {
+         return false;
+      }
+      for (int index = 0; index < first.size(); index++) {
+         if (!first.get(index).equals(second.get(index))) {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   private void resetTransition() {
+      this.lastTargetPos = null;
+      this.animationFromBoxes = List.of();
+      this.animationToBoxes = List.of();
+      this.animationStartedAt = 0L;
+   }
+
    // Заливает грани блока шейдером (своими настройками, core/sky/water | caustic).
-   private void renderShaderFaces(class_2338 pos, class_265 shape) {
+   private void renderShaderFaces(List<class_238> boxes) {
       if (this.startMillis < 0L) {
          this.startMillis = System.currentTimeMillis();
       }
@@ -182,8 +282,8 @@ public class BlockOverlay extends Module {
       Matrix4f matrix = Render3D.lastWorldSpaceMatrix.method_23761();
       class_287 buffer = class_289.method_1348().method_60827(class_5596.field_27382, class_290.field_1592);
 
-      for (class_238 relative : shape.method_1090()) {
-         this.appendBoxFaces(buffer, matrix, relative.method_996(pos).method_1014(0.002));
+      for (class_238 box : boxes) {
+         this.appendBoxFaces(buffer, matrix, box.method_1014(0.002));
       }
 
       class_286.method_43433(buffer.method_60800());

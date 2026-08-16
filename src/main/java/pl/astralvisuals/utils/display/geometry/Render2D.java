@@ -95,6 +95,26 @@ public final class Render2D implements QuickImports {
       }
    }
 
+   /** Draws a texture with its original RGB values and standard alpha blending. */
+   public static void drawTextureOriginal(class_332 context, class_2960 id, float x, float y, float width, float height) {
+      if (id == null) {
+         return;
+      }
+      class_4587 matrix = context.method_51448();
+      float renderX = UiScale.x(x);
+      float renderY = UiScale.y(y);
+      float renderWidth = UiScale.size(width);
+      float renderHeight = UiScale.size(height);
+      matrix.method_22903();
+      matrix.method_46416(renderX, renderY, 0.0F);
+      matrix.method_22905(renderWidth, renderHeight, 1.0F);
+      RenderSystem.enableBlend();
+      RenderSystem.defaultBlendFunc();
+      drawTexture(matrix, id, 0, 0, 1.0F, 1.0F, 0.0F, 0.0F, 1, 1, 1, 1, -1);
+      RenderSystem.disableBlend();
+      matrix.method_22909();
+   }
+
    public static Color applyOpacity(Color color, float opacity) {
       opacity = Math.min(1.0F, Math.max(0.0F, opacity));
       return new Color(color.getRed(), color.getGreen(), color.getBlue(), (int)(color.getAlpha() * opacity));

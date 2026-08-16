@@ -1,6 +1,7 @@
 package pl.astralvisuals.mixins.client.screen.ingame;
 
 import java.util.ConcurrentModificationException;
+import net.minecraft.class_1294;
 import net.minecraft.class_1657;
 import net.minecraft.class_1702;
 import net.minecraft.class_1921;
@@ -21,6 +22,8 @@ import pl.astralvisuals.Force;
 import pl.astralvisuals.events.render.DrawEvent;
 import pl.astralvisuals.features.impl.render.CrossHair;
 import pl.astralvisuals.features.impl.render.Interface;
+import pl.astralvisuals.features.impl.movement.ItemHighlighter;
+import pl.astralvisuals.features.impl.render.SaturationBar;
 import pl.astralvisuals.utils.client.managers.event.EventManager;
 import pl.astralvisuals.utils.display.geometry.Render2D;
 import pl.astralvisuals.utils.display.interfaces.QuickImports;
@@ -43,6 +46,15 @@ public abstract class InGameHudMixin implements QuickImports {
    @Final
    @Shadow
    private static class_2960 field_45298;
+   @Final
+   @Shadow
+   private static class_2960 field_45324;
+   @Final
+   @Shadow
+   private static class_2960 field_45325;
+   @Final
+   @Shadow
+   private static class_2960 field_45326;
 
    @Inject(
       method = "render",
@@ -110,22 +122,41 @@ public abstract class InGameHudMixin implements QuickImports {
 
    @Inject(method = "renderFood", at = @At("TAIL"))
    private void astralvisual$renderAppleSkin(class_332 context, class_1657 player, int top, int right, CallbackInfo ci) {
-      if (player != null) {
+      SaturationBar saturationBar = SaturationBar.getInstance();
+      if (player != null && saturationBar != null && saturationBar.isState()) {
          class_1702 hungerManager = player.method_7344();
          float saturation = Math.min(hungerManager.method_7589(), (float)hungerManager.method_7586());
-         if (!(saturation <= 0.0F)) {
+         if (saturation >= 1.0F) {
+            boolean hunger = player.method_6059(class_1294.field_5903);
+            class_2960 empty = hunger ? field_45324 : field_45327;
+            class_2960 half = hunger ? field_45325 : field_45328;
+            class_2960 full = hunger ? field_45326 : field_45298;
             for (int index = 0; index < 10; index++) {
-               float iconSaturation = Math.max(0.0F, Math.min(2.0F, saturation - index * 2.0F));
+               float fullThreshold = (index + 1) * 2.0F;
+               float halfThreshold = fullThreshold - 1.0F;
+               boolean drawFull = saturation >= fullThreshold;
+               boolean drawHalf = !drawFull && saturation >= halfThreshold;
+               if (!drawFull && !drawHalf) {
+                  continue;
+               }
                int x = right - index * 8 - 9;
                int y = top - 10;
-               context.method_52706(class_1921::method_62277, field_45327, x, y, 9, 9);
-               if (iconSaturation >= 2.0F) {
-                  context.method_52706(class_1921::method_62277, field_45298, x, y, 9, 9);
-               } else if (iconSaturation > 0.0F) {
-                  context.method_52706(class_1921::method_62277, field_45328, x, y, 9, 9);
-               }
+               context.method_52706(class_1921::method_62277, empty, x, y, 9, 9);
+               context.method_52706(class_1921::method_62277, drawFull ? full : half, x, y, 9, 9);
             }
          }
+      }
+   }
+
+   @Inject(
+      method = "method_1762(Lnet/minecraft/class_332;IILnet/minecraft/class_9779;Lnet/minecraft/class_1657;Lnet/minecraft/class_1799;I)V",
+      at = @At("HEAD"),
+      remap = false
+   )
+   private void astral$itemHighlight(class_332 context, int x, int y, class_9779 tickCounter, class_1657 player, net.minecraft.class_1799 stack, int seed, CallbackInfo ci) {
+      ItemHighlighter module = ItemHighlighter.getInstance();
+      if (module != null) {
+         module.renderHotbar(context, x, y, stack);
       }
    }
 }

@@ -66,6 +66,14 @@ tasks.register("updaterSmokeTest", JavaExec) {
 	mainClass = "pl.astralvisuals.utils.update.GitHubUpdaterSmokeTest"
 }
 
+tasks.register("soundOggSmokeTest", JavaExec) {
+	group = "verification"
+	description = "Stress-tests the HitSound OGG decoder and direct-buffer cleanup"
+	dependsOn tasks.named("compileTestJava")
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = "pl.astralvisuals.utils.client.sound.SoundManagerOggSmokeTest"
+}
+
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_21
