@@ -163,8 +163,8 @@ public class Force implements ModInitializer {
    }
 
    private void initClientInfoProvider() {
-      File clientDirectory = new File(class_310.method_1551().field_1697, "\\AstralVisuals\\");
-      File filesDirectory = new File(clientDirectory, "\\Files\\");
+      File clientDirectory = new File(class_310.method_1551().field_1697, "AstralVisuals");
+      File filesDirectory = new File(clientDirectory, "Files");
       this.clientInfoProvider = new ClientInfo(ClientVersion.displayName(), clientDirectory, filesDirectory);
    }
 

@@ -34,7 +34,7 @@ public class MacroRepository implements QuickImports, QuickLogger {
    @EventHandler
    public void onKey(KeyEvent e) {
       if (mc.field_1724 != null && e.action() == 0 && mc.field_1755 == null) {
-         this.macroList.stream().filter(macro -> macro.key() == e.key()).findFirst().ifPresent(macro -> mc.field_1724.field_3944.method_45729(macro.message()));
+         this.macroList.stream().filter(macro -> e.matches(macro.key())).findFirst().ifPresent(macro -> mc.field_1724.field_3944.method_45729(macro.message()));
       }
    }
 }

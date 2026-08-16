@@ -21,7 +21,7 @@ public class ModuleSwitcher implements QuickLogger, QuickImports {
    @EventHandler
    public void onKey(KeyEvent event) {
       for (Module module : this.modules) {
-         if (event.key() == module.getKey() && mc.field_1755 == null) {
+         if (event.matches(module.getKey()) && mc.field_1755 == null) {
             try {
                this.handleModuleState(module, event.action());
             } catch (Exception var5) {
