@@ -201,7 +201,6 @@ public class CategoryComponent extends AbstractComponent {
          case COMBAT -> "A";
          case RENDER -> "C";
          case PLAYER -> "D";
-         case MISC -> "E";
          case CONFIGS -> "F";
       };
    }

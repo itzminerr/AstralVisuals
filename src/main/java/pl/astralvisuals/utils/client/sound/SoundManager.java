@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
@@ -17,12 +18,12 @@ import javax.sound.sampled.LineEvent;
 import net.minecraft.class_4228;
 import net.minecraft.class_2378;
 import net.minecraft.class_2960;
+import net.minecraft.class_3298;
 import net.minecraft.class_3414;
 import net.minecraft.class_3419;
 import net.minecraft.class_7923;
 import pl.astralvisuals.utils.display.interfaces.QuickImports;
 import pl.astralvisuals.utils.interactions.interact.PlayerInteractionHelper;
-import org.lwjgl.system.MemoryUtil;
 
 public final class SoundManager implements QuickImports {
    public static class_3414 OPEN_GUI = class_3414.method_47908(class_2960.method_60654("minecraft:gui_open"));
@@ -70,10 +71,45 @@ public final class SoundManager implements QuickImports {
       });
    }
 
+   /** Plays an OGG/WAV resource directly from the client JAR. */
+   public static void playResource(class_2960 id, float volume) {
+      if (id == null || volume <= 0.0F || mc.method_1478() == null) {
+         return;
+      }
+      CompletableFuture.runAsync(() -> {
+         try {
+            Optional<class_3298> resource = mc.method_1478().method_14486(id);
+            if (resource.isEmpty()) {
+               return;
+            }
+            try (InputStream input = resource.get().method_14482()) {
+               String path = id.method_12832().toLowerCase(Locale.ROOT);
+               if (path.endsWith(".ogg")) {
+                  playOgg(input, volume);
+               } else if (path.endsWith(".wav") || path.endsWith(".aiff") || path.endsWith(".aif") || path.endsWith(".au")) {
+                  playJavaSound(input, volume);
+               }
+            }
+         } catch (Exception ignored) {
+         }
+      });
+   }
+
    private static void playOgg(File file, float volume) throws Exception {
+      try (InputStream input = Files.newInputStream(file.toPath())) {
+         playOgg(input, volume);
+      }
+   }
+
+   private static void playOgg(InputStream input, float volume) throws Exception {
+      DecodedAudio decoded = decodeOgg(input);
+      playPcm(decoded.format(), decoded.pcm(), volume);
+   }
+
+   static DecodedAudio decodeOgg(InputStream input) throws Exception {
       AudioFormat format;
       byte[] pcm;
-      try (InputStream input = Files.newInputStream(file.toPath()); class_4228 ogg = new class_4228(input); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+      try (class_4228 ogg = new class_4228(input); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
          format = ogg.method_19719();
          while (true) {
             ByteBuffer buffer = ogg.method_19720(64 * 1024);
@@ -84,7 +120,6 @@ public final class SoundManager implements QuickImports {
                output.write(chunk);
             }
 
-            MemoryUtil.memFree(buffer);
             if (length == 0) {
                break;
             }
@@ -93,11 +128,17 @@ public final class SoundManager implements QuickImports {
          pcm = output.toByteArray();
       }
 
-      playPcm(format, pcm, volume);
+      return new DecodedAudio(format, pcm);
    }
 
    private static void playJavaSound(File file, float volume) throws Exception {
-      try (AudioInputStream source = AudioSystem.getAudioInputStream(file)) {
+      try (InputStream input = Files.newInputStream(file.toPath())) {
+         playJavaSound(input, volume);
+      }
+   }
+
+   private static void playJavaSound(InputStream input, float volume) throws Exception {
+      try (AudioInputStream source = AudioSystem.getAudioInputStream(new java.io.BufferedInputStream(input))) {
          AudioFormat original = source.getFormat();
          AudioFormat decoded = new AudioFormat(
             AudioFormat.Encoding.PCM_SIGNED,
@@ -133,6 +174,9 @@ public final class SoundManager implements QuickImports {
          }
       });
       clip.start();
+   }
+
+   record DecodedAudio(AudioFormat format, byte[] pcm) {
    }
 
    private SoundManager() {

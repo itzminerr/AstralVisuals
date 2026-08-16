@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import pl.astralvisuals.events.container.HandledScreenEvent;
 import pl.astralvisuals.features.impl.movement.ItemScroller;
+import pl.astralvisuals.features.impl.movement.ItemHighlighter;
 import pl.astralvisuals.utils.client.interfaces.IHandledScreen;
 import pl.astralvisuals.utils.client.managers.event.EventManager;
 
@@ -32,6 +33,14 @@ public abstract class HandledScreenMixin implements IHandledScreen {
    // getSlotAt(mouseX, mouseY)
    @Shadow
    protected abstract class_1735 method_64240(double mouseX, double mouseY);
+
+   @Inject(method = "method_2385(Lnet/minecraft/class_332;Lnet/minecraft/class_1735;)V", at = @At("HEAD"), remap = false)
+   private void astral$itemHighlight(class_332 context, class_1735 slot, CallbackInfo ci) {
+      ItemHighlighter module = ItemHighlighter.getInstance();
+      if (module != null) {
+         module.renderSlot(context, slot);
+      }
+   }
 
    @Override
    public class_1735 astral$focusedSlot() {

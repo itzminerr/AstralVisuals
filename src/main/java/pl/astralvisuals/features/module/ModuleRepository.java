@@ -6,18 +6,24 @@ import java.util.List;
 import pl.astralvisuals.features.impl.movement.AutoDuel;
 import pl.astralvisuals.features.impl.movement.AutoRespawn;
 import pl.astralvisuals.features.impl.movement.AutoSprint;
+import pl.astralvisuals.features.impl.movement.AntiBanChat;
 import pl.astralvisuals.features.impl.movement.CardChecker;
 import pl.astralvisuals.features.impl.movement.ClickPearl;
 import pl.astralvisuals.features.impl.movement.CrystalOptimizer;
 import pl.astralvisuals.features.impl.movement.Cooldowns;
 import pl.astralvisuals.features.impl.movement.DiscordPresence;
+import pl.astralvisuals.features.impl.movement.EggMan;
+import pl.astralvisuals.features.impl.movement.HitSound;
+import pl.astralvisuals.features.impl.movement.ItemHighlighter;
 import pl.astralvisuals.features.impl.movement.ItemScroller;
 import pl.astralvisuals.features.impl.movement.ItemSwap;
 import pl.astralvisuals.features.impl.movement.LockSlot;
 import pl.astralvisuals.features.impl.movement.TapeMouse;
+import pl.astralvisuals.features.impl.movement.Tracker;
 import pl.astralvisuals.features.impl.player.FakePlayer;
 import pl.astralvisuals.features.impl.player.FreeLook;
 import pl.astralvisuals.features.impl.render.AspectRatio;
+import pl.astralvisuals.features.impl.render.BabyMod;
 import pl.astralvisuals.features.impl.render.BetterMinecraft;
 import pl.astralvisuals.features.impl.render.BlockOverlay;
 import pl.astralvisuals.features.impl.render.Camera;
@@ -36,6 +42,7 @@ import pl.astralvisuals.features.impl.render.MotionBlur;
 import pl.astralvisuals.features.impl.render.NoRender;
 import pl.astralvisuals.features.impl.render.Particles;
 import pl.astralvisuals.features.impl.render.Predictions;
+import pl.astralvisuals.features.impl.render.SaturationBar;
 import pl.astralvisuals.features.impl.render.SelfNametag;
 import pl.astralvisuals.features.impl.render.SkyShader;
 import pl.astralvisuals.features.impl.render.SwingAnimation;
@@ -50,16 +57,21 @@ public class ModuleRepository {
    public void setup() {
       this.register(
          new AutoSprint(),
+         new AntiBanChat(),
          new CardChecker(),
          new ClickPearl(),
          new CrystalOptimizer(),
          new Cooldowns(),
          new DiscordPresence(),
+         new EggMan(),
+         new HitSound(),
+         new ItemHighlighter(),
          new ItemScroller(),
          new FreeLook(),
          new FakePlayer(),
          new JumpCircle(),
          new BetterMinecraft(),
+         new BabyMod(),
          new AspectRatio(),
          new Interface(),
          new Particles(),
@@ -88,6 +100,8 @@ public class ModuleRepository {
          new TapeMouse(),
          new ItemSwap(),
          new Predictions(),
+         new SaturationBar(),
+         new Tracker(),
          new SelfNametag()
       );
    }

@@ -100,8 +100,7 @@ public class MenuScreen extends class_437 implements QuickImports {
       this.userComponent.position(this.x, this.y + this.height);
       if (this.category != ModuleCategory.COMBAT
          && this.category != ModuleCategory.RENDER
-         && this.category != ModuleCategory.PLAYER
-         && this.category != ModuleCategory.MISC) {
+         && this.category != ModuleCategory.PLAYER) {
          this.searchComponent.position(this.x + this.width + 9999.0F, this.y - 9999.0F);
          this.searchComponent.setText("");
       } else {

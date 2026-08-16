@@ -6,22 +6,45 @@ import net.minecraft.class_2675;
 import net.minecraft.class_634;
 import net.minecraft.class_7439;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import pl.astralvisuals.events.chat.ChatEvent;
 import pl.astralvisuals.features.impl.render.NoRender;
+import pl.astralvisuals.features.impl.movement.AntiBanChat;
 import pl.astralvisuals.utils.client.managers.event.EventManager;
 import pl.astralvisuals.utils.display.interfaces.QuickImports;
 
 @Mixin(class_634.class)
 public class ClientPlayNetworkHandlerMixin implements QuickImports {
+   @Unique
+   private boolean astral$antiBanChatBypass;
+
    @Inject(method = "sendChatMessage(Ljava/lang/String;)V", at = @At("HEAD"), cancellable = true)
    private void sendChatMessage(String string, CallbackInfo ci) {
+      if (this.astral$antiBanChatBypass) {
+         return;
+      }
       ChatEvent event = new ChatEvent(string);
       EventManager.callEvent(event);
       if (event.isCancelled()) {
          ci.cancel();
+         return;
+      }
+      AntiBanChat antiBanChat = AntiBanChat.getInstance();
+      if (antiBanChat != null) {
+         String protectedMessage = antiBanChat.protect(event.getMessage());
+         if (!protectedMessage.equals(string)) {
+            this.astral$antiBanChatBypass = true;
+            try {
+               ((class_634)(Object)this).method_45729(protectedMessage);
+            } finally {
+               this.astral$antiBanChatBypass = false;
+            }
+            antiBanChat.notifyProtected();
+            ci.cancel();
+         }
       }
    }
 

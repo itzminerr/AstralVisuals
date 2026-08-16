@@ -15,7 +15,6 @@ import pl.astralvisuals.utils.client.managers.api.draggable.AbstractDraggable;
 import pl.astralvisuals.utils.display.color.ColorAssist;
 import pl.astralvisuals.utils.display.font.FontRenderer;
 import pl.astralvisuals.utils.display.font.Fonts;
-import pl.astralvisuals.utils.display.shape.ShapeProperties;
 import pl.astralvisuals.utils.display.style.GlassStyle;
 import pl.astralvisuals.utils.interactions.interact.PlayerInteractionHelper;
 import pl.astralvisuals.utils.math.calc.Calculate;
@@ -61,8 +60,6 @@ public class HotKeys extends AbstractDraggable {
       FontRenderer font = Fonts.getSize(13, Fonts.Type.DEFAULT);
       FontRenderer fontModule = Fonts.getSize(13, Fonts.Type.DEFAULT);
       FontRenderer icon = Fonts.getSize(23, Fonts.Type.ICONS);
-      FontRenderer items = Fonts.getSize(12, Fonts.Type.DEFAULT);
-      FontRenderer categoryIcon = Fonts.getSize(16, Fonts.Type.ICONSCATEGORY);
       GlassStyle.backdrop(matrix, this.getX(), this.getY(), this.getWidth(), 15.5F, new Vector4f(9.0F, 0.0F, 9.0F, 0.0F));
       icon.drawString(matrix, "B", this.getX() + 4.0F, this.getY() + 5.0F, new Color(225, 225, 255, 255).getRGB());
       font.drawString(matrix, this.getName(), this.getX() + 22, this.getY() + 6.5F, ColorAssist.getText());
@@ -74,19 +71,16 @@ public class HotKeys extends AbstractDraggable {
          float centerY = this.getY() + offset;
          String name = "Пример модуля";
          String bind = "[" + this.currentRandomKey + "]";
-         String iconChar = "A";
          int textColor = ColorAssist.getText();
          int textAlpha = 255;
          int colorWithAlpha = ColorAssist.rgba(textColor >> 16 & 0xFF, textColor >> 8 & 0xFF, textColor & 0xFF, textAlpha);
          int color = new Color(225, 225, 255, 255).getRGB();
          float bindWidth = fontModule.getStringWidth(bind);
          Calculate.scale(matrix, centerX, centerY, 1.0F, 1.0F, () -> {
-            categoryIcon.drawString(matrix, iconChar, this.getX() + 4.5F, centerY + 1.5F, color);
-            rectangle.render(ShapeProperties.create(matrix, this.getX() + 15.0F, centerY - 1.0F, 0.5, 7.0).color(ColorAssist.getOutline(1.0F, 0.5F)).build());
-            fontModule.drawString(matrix, name, this.getX() + 19, centerY + 1.0F, colorWithAlpha);
+            fontModule.drawString(matrix, name, this.getX() + 5.0F, centerY + 1.0F, colorWithAlpha);
             fontModule.drawString(matrix, bind, this.getX() + this.getWidth() - bindWidth - 8.0F, centerY + 1.0F, color);
          });
-         int width = (int)fontModule.getStringWidth(name + bind) + 25;
+         int width = (int)fontModule.getStringWidth(name + bind) + 15;
          maxWidth = Math.max(width, maxWidth);
          offset += 11;
       } else {
@@ -95,14 +89,6 @@ public class HotKeys extends AbstractDraggable {
             float centerY = this.getY() + offset;
             float animation = module.getAnimation().getOutput().floatValue();
 
-            String iconChar = switch (module.getCategory()) {
-               case COMBAT -> "A";
-               case RENDER -> "C";
-               case PLAYER -> "D";
-               case MISC -> "E";
-               case CONFIGS -> "F";
-               default -> module.getCategory().getReadableName().substring(0, 1);
-            };
             int textColor = ColorAssist.getText();
             int textAlpha = 255;
             int colorWithAlpha = ColorAssist.rgba(textColor >> 16 & 0xFF, textColor >> 8 & 0xFF, textColor & 0xFF, textAlpha);
@@ -115,15 +101,11 @@ public class HotKeys extends AbstractDraggable {
                1.0F,
                animation,
                () -> {
-                  categoryIcon.drawString(matrix, iconChar, this.getX() + 4.5F, centerY + 1.5F, color);
-                  rectangle.render(
-                     ShapeProperties.create(matrix, this.getX() + 15.0F, centerY - 1.0F, 0.5, 7.0).color(ColorAssist.getOutline(1.0F, 0.5F)).build()
-                  );
-                  fontModule.drawString(matrix, module.getVisibleName(), this.getX() + 19, centerY + 1.0F, colorWithAlpha);
+                  fontModule.drawString(matrix, module.getVisibleName(), this.getX() + 5.0F, centerY + 1.0F, colorWithAlpha);
                   fontModule.drawString(matrix, bind, this.getX() + this.getWidth() - bindWidth - 8.0F, centerY + 1.0F, color);
                }
             );
-            float width = fontModule.getStringWidth(module.getVisibleName() + bind) + 25.0F;
+            float width = fontModule.getStringWidth(module.getVisibleName() + bind) + 15.0F;
             maxWidth = (int)Math.max(width, (float)maxWidth);
             offset += (int)(animation * 11.0F);
          }

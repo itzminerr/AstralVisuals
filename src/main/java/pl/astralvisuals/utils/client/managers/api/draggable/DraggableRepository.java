@@ -5,6 +5,7 @@ import java.util.List;
 import pl.astralvisuals.display.hud.Coordinates;
 import pl.astralvisuals.display.hud.HotKeys;
 import pl.astralvisuals.display.hud.Inventory;
+import pl.astralvisuals.display.hud.MediaPlayer;
 import pl.astralvisuals.display.hud.Notifications;
 import pl.astralvisuals.display.hud.Potions;
 import pl.astralvisuals.display.hud.TargetHud;
@@ -15,7 +16,7 @@ public class DraggableRepository {
    private final List<AbstractDraggable> draggable = new ArrayList<>();
 
    public void setup() {
-      this.register(new Potions(), new HotKeys(), new Watermark(), new Inventory(), new Notifications(), new TargetHud(), new Coordinates(), new Waypoints());
+      this.register(new Potions(), new HotKeys(), new Watermark(), new Inventory(), new Notifications(), new TargetHud(), new Coordinates(), new Waypoints(), new MediaPlayer());
    }
 
    public void register(AbstractDraggable... module) {
