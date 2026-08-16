@@ -15,6 +15,7 @@ _analysis/
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
 !src/main/resources/META-INF/jars/*.jar
+!astralinstaller.jar
 
 # IDE
 .idea/
