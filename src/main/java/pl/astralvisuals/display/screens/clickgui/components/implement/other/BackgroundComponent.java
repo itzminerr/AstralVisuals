@@ -37,6 +37,7 @@ import pl.astralvisuals.utils.client.sound.SoundManager;
 import pl.astralvisuals.utils.display.color.ColorAssist;
 import pl.astralvisuals.utils.display.font.FontRenderer;
 import pl.astralvisuals.utils.display.font.Fonts;
+import pl.astralvisuals.utils.update.ClientVersion;
 import pl.astralvisuals.utils.display.shape.ShapeProperties;
 import pl.astralvisuals.utils.display.style.GlassStyle;
 import pl.astralvisuals.utils.math.calc.Calculate;
@@ -88,7 +89,7 @@ public class BackgroundComponent extends AbstractComponent {
       );
       Fonts.getSize(22, Fonts.Type.BOLD).drawString(matrix, "A", this.x + 10.0F, this.y + 14.0F, ColorAssist.getText(0.78F));
       Fonts.getSize(14, Fonts.Type.DEFAULT).drawString(matrix, "AstralVisuals", this.x + 28.0F, this.y + 12.5F, ColorAssist.getText(0.78F));
-      Fonts.getSize(14, Fonts.Type.DEFAULT).drawString(matrix, "Версия: 1.2", this.x + 28.0F, this.y + 19.5F, ColorAssist.getText(0.78F));
+      Fonts.getSize(14, Fonts.Type.DEFAULT).drawString(matrix, "Версия: " + ClientVersion.get(), this.x + 28.0F, this.y + 19.5F, ColorAssist.getText(0.78F));
       GlassStyle.surface(matrix, this.x + 81.0F, this.y + 5.0F, 184.0F, 25.0F, 11.0F, false);
       GlassStyle.surface(matrix, this.x + 269.0F, this.y + 5.0F, 123.0F, 25.0F, 11.0F, false);
       FontRenderer menuFont = Fonts.getSize(15, Fonts.Type.DEFAULT);

@@ -34,6 +34,8 @@ import pl.astralvisuals.utils.client.session.SessionHelper;
 import pl.astralvisuals.utils.client.sound.SoundManager;
 import pl.astralvisuals.utils.connection.tps.TPSCalculate;
 import pl.astralvisuals.utils.display.scissor.ScissorAssist;
+import pl.astralvisuals.utils.update.ClientVersion;
+import pl.astralvisuals.utils.update.GitHubUpdater;
 
 public class Force implements ModInitializer {
    static Force instance;
@@ -58,6 +60,7 @@ public class Force implements ModInitializer {
 
    public void onInitialize() {
       instance = this;
+      GitHubUpdater.checkForUpdatesAsync();
       this.initClientInfoProvider();
       this.initModules();
       this.initDraggable();
@@ -164,7 +167,7 @@ public class Force implements ModInitializer {
    private void initClientInfoProvider() {
       File clientDirectory = new File(class_310.method_1551().field_1697, "\\AstralVisuals\\");
       File filesDirectory = new File(clientDirectory, "\\Files\\");
-      this.clientInfoProvider = new ClientInfo("AstralVisuals 1.2", clientDirectory, filesDirectory);
+      this.clientInfoProvider = new ClientInfo(ClientVersion.displayName(), clientDirectory, filesDirectory);
    }
 
    private void initFileManager() {

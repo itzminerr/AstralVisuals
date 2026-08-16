@@ -58,6 +58,14 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.compilerArgs += ["-proc:none"]
 }
 
+tasks.register("updaterSmokeTest", JavaExec) {
+	group = "verification"
+	description = "Runs the live GitHub updater smoke test without touching the installed mod"
+	dependsOn tasks.named("compileTestJava")
+	classpath = sourceSets.test.output.classesDirs + sourceSets.main.output.classesDirs + configurations.testRuntimeClasspath
+	mainClass = "pl.astralvisuals.utils.update.GitHubUpdaterSmokeTest"
+}
+
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_21

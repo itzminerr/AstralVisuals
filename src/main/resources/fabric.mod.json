@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "accessWidener": "accesswidener",
   "id": "astralvisuals",
-  "version": "1.2",
+  "version": "${version}",
   "icon": "assets/minecraft/icon.png",
   "name": "AstralVisuals",
   "description": "AstralVisuals",
@@ -11,8 +11,8 @@
     "dophyxzz"
   ],
   "contact": {
-    "website": "none",
-    "repo": "none"
+    "website": "https://github.com/itzminerr/AstralVisuals",
+    "repo": "https://github.com/itzminerr/AstralVisuals"
   },
   "license": "All-Rights-Reserved",
   "environment": "*",
