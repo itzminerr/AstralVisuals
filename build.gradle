@@ -74,6 +74,14 @@ tasks.register("soundOggSmokeTest", JavaExec) {
 	mainClass = "pl.astralvisuals.utils.client.sound.SoundManagerOggSmokeTest"
 }
 
+tasks.register("mediaPlayerPerformanceTest", JavaExec) {
+	group = "verification"
+	description = "Stress-tests off-thread MediaPlayer artwork decoding and scaling"
+	dependsOn tasks.named("compileTestJava")
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = "pl.astralvisuals.display.hud.MediaPlayerPerformanceTest"
+}
+
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_21
