@@ -7,8 +7,8 @@ run/
 # Compiled / logs
 *.class
 *.log
-crash-reports/
-logs/
+/crash-reports/
+/logs/
 _analysis/
 
 # Jars (keep the Gradle wrapper and the bundled runtime jars)
@@ -25,4 +25,4 @@ _analysis/
 .vscode/
 
 # Local config
-config/
+/config/
