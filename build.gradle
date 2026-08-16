@@ -44,6 +44,17 @@ dependencies {
 	include "org.ladysnake:satin:3.0.0-alpha.1"
 }
 
+sourceSets {
+	installer {
+		java.srcDir "src/installer/java"
+		resources.srcDirs = []
+	}
+	test {
+		compileClasspath += sourceSets.installer.output
+		runtimeClasspath += sourceSets.installer.output
+	}
+}
+
 processResources {
 	def version = project.version
 	inputs.property "version", version
@@ -58,12 +69,38 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.compilerArgs += ["-proc:none"]
 }
 
-tasks.register("updaterSmokeTest", JavaExec) {
+tasks.register("installerJar", Jar) {
+	group = "build"
+	description = "Builds the standalone cross-platform pre-launch updater"
+	dependsOn tasks.named("installerClasses")
+	from sourceSets.installer.output
+	archiveFileName = "astralinstaller.jar"
+	destinationDirectory = layout.projectDirectory
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+	manifest {
+		attributes(
+			"Main-Class": "pl.astralvisuals.installer.AstralInstaller",
+			"Implementation-Title": "AstralVisuals Installer",
+			"Implementation-Version": project.version
+		)
+	}
+}
+
+tasks.named("assemble") {
+	dependsOn tasks.named("installerJar")
+}
+
+tasks.named("compileTestJava") {
+	dependsOn tasks.named("compileInstallerJava")
+}
+
+tasks.register("installerSmokeTest", JavaExec) {
 	group = "verification"
-	description = "Runs the live GitHub updater smoke test without touching the installed mod"
+	description = "Tests the standalone installer against the live GitHub Release"
 	dependsOn tasks.named("compileTestJava")
-	classpath = sourceSets.test.output.classesDirs + sourceSets.main.output.classesDirs + configurations.testRuntimeClasspath
-	mainClass = "pl.astralvisuals.utils.update.GitHubUpdaterSmokeTest"
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = "pl.astralvisuals.installer.AstralInstallerSmokeTest"
 }
 
 tasks.register("soundOggSmokeTest", JavaExec) {

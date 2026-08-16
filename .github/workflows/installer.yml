@@ -1,0 +1,36 @@
+name: Installer compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Java 21 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build client and standalone installer
+        shell: bash
+        run: bash ./gradlew build installerSmokeTest --no-daemon --console=plain
+
+      - name: Verify standalone entry point
+        shell: bash
+        run: java -jar astralinstaller.jar --help

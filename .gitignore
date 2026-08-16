@@ -7,14 +7,15 @@ run/
 # Compiled / logs
 *.class
 *.log
-crash-reports/
-logs/
+/crash-reports/
+/logs/
 _analysis/
 
 # Jars (keep the Gradle wrapper and the bundled runtime jars)
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
 !src/main/resources/META-INF/jars/*.jar
+!astralinstaller.jar
 
 # IDE
 .idea/
@@ -24,4 +25,4 @@ _analysis/
 .vscode/
 
 # Local config
-config/
+/config/
