@@ -1,28 +1,16 @@
 # AstralVisuals
 
-## Обновление до запуска Minecraft
+## Автоматическое обновление
 
-Версионные файлы клиента, например `astralvisuals-2.3.jar`, не содержат встроенного автообновления. За обновление отвечает отдельный кроссплатформенный загрузчик [`astralinstaller.jar`](astralinstaller.jar), лежащий в корне проекта. [Скачать загрузчик напрямую](https://raw.githubusercontent.com/itzminerr/AstralVisuals/main/astralinstaller.jar).
+Для установки достаточно скачать [`astralinstaller.jar`](astralinstaller.jar) и положить **только его** в папку `mods`. [Скачать загрузчик напрямую](https://raw.githubusercontent.com/itzminerr/AstralVisuals/main/astralinstaller.jar).
 
-Загрузчик нужно назначить **Pre-launch command** в PrismLauncher. Он при каждом запуске проверяет последний публичный GitHub Release, безопасно скачивает и проверяет новый клиент в папку `mods`, удаляет предыдущую версию и завершается. Только после этого PrismLauncher запускает Minecraft, поэтому перезапуск игры для применения обновления не нужен. Это самостоятельная Java-программа, а не Fabric-мод: класть сам `astralinstaller.jar` в папку `mods` не требуется.
+`astralinstaller.jar` — Fabric-мод с `preLaunch`-загрузчиком. При каждом запуске он до старта Minecraft проверяет последний публичный GitHub Release, скачивает и проверяет актуальный клиент, подключает его mixin-конфигурацию и запускает клиент в этом же процессе. Настраивать команды PrismLauncher и перезапускать игру после обновления не нужно. Один и тот же файл работает на Windows и Linux с Java 21.
 
-Windows:
+Загруженный клиент хранится в `.astralinstaller/client.jar` внутри папки экземпляра Minecraft, а не в `mods`. Если GitHub временно недоступен, используется ранее проверенная копия. При первом запуске интернет обязателен.
 
-```bat
-"%INST_JAVA%" -jar "C:\путь\к\astralinstaller.jar"
-```
+Обычные версионные файлы, например `astralvisuals-2.4.jar`, остаются самостоятельными Fabric-модами без встроенного автообновления. Не кладите обычный клиент и загрузчик в `mods` одновременно.
 
-Linux:
-
-```sh
-"$INST_JAVA" -jar "/путь/к/astralinstaller.jar"
-```
-
-PrismLauncher передаёт загрузчику `INST_MC_DIR`, поэтому папка `mods` определяется автоматически. Для другого лаунчера можно указать её явно: `java -jar astralinstaller.jar --mods-dir "/путь/к/.minecraft/mods"`.
-
-Для тегов релизов используются версии вида `v2.3`; к релизу прикладывается соответствующий JAR клиента, например `astralvisuals-2.3.jar`. Загрузчик работает на Windows и Linux с Java 21.
-
-Команда `./gradlew build` создаёт одновременно версионный мод `build/libs/astralvisuals-<версия>.jar` без встроенного обновления и перезаписывает отдельный `astralinstaller.jar` в корне проекта.
+Команда `./gradlew build` создаёт версионный мод `build/libs/astralvisuals-<версия>.jar` и перезаписывает отдельный Fabric-загрузчик `astralinstaller.jar` в корне проекта.
 
 AstralVisuals это визуальный и утилитарный мод для **Minecraft 1.21.4**
 

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "astralinstaller",
+  "version": "${version}",
+  "name": "AstralVisuals Installer",
+  "description": "Downloads and attaches the latest AstralVisuals client before Minecraft starts.",
+  "authors": [
+    "itzminerr"
+  ],
+  "contact": {
+    "website": "https://github.com/itzminerr/AstralVisuals",
+    "repo": "https://github.com/itzminerr/AstralVisuals"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "accessWidener": "accesswidener",
+  "entrypoints": {
+    "preLaunch": [
+      "pl.astralvisuals.installer.AstralInstaller"
+    ],
+    "main": [
+      "pl.astralvisuals.installer.AstralInstaller"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.8",
+    "fabric": "*",
+    "minecraft": "~1.21.4"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/satin-3.0.0-alpha.1.jar"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ package pl.astralvisuals.installer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,99 +18,116 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HexFormat;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Standalone pre-launch updater for AstralVisuals. Uses only the Java runtime. */
-public final class AstralInstaller {
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
+import net.fabricmc.loader.impl.launch.knot.Knot;
+import org.spongepowered.asm.mixin.Mixins;
+
+/**
+ * Zero-configuration Fabric loader for AstralVisuals.
+ *
+ * <p>The loader is the only file users put in {@code mods}. During Fabric's
+ * pre-launch phase it synchronously checks GitHub, caches the current client
+ * outside {@code mods}, adds that client to Knot's class path and registers its
+ * mixins before Minecraft classes are loaded.</p>
+ */
+public final class AstralInstaller implements PreLaunchEntrypoint, ModInitializer {
    static final URI LATEST_RELEASE = URI.create("https://api.github.com/repos/itzminerr/AstralVisuals/releases/latest");
+   static final String RELEASE_API_PROPERTY = "astralinstaller.releaseApi";
+   static final String CLIENT_VERSION_PROPERTY = "astralvisuals.client.version";
+
    private static final String MOD_ID = "astralvisuals";
+   private static final String CACHE_DIRECTORY = ".astralinstaller";
+   private static final String CLIENT_FILE = "client.jar";
+   private static final String CLIENT_ENTRYPOINT = "pl.astralvisuals.Force";
+   private static final String MIXIN_CONFIGURATION = "mixins.json";
    private static final String REPOSITORY_RELEASE_PATH = "/itzminerr/AstralVisuals/releases/download/";
    private static final long MAX_DOWNLOAD_BYTES = 250L * 1024L * 1024L;
    private static final int MAX_METADATA_BYTES = 1024 * 1024;
 
-   private AstralInstaller() {
-   }
+   private static volatile boolean payloadReady;
 
-   public static void main(String[] args) {
-      int exitCode = run(args, System.getenv(), Path.of("").toAbsolutePath().normalize(), System.out, System.err);
-      if (exitCode != 0) {
-         System.exit(exitCode);
+   @Override
+   public void onPreLaunch() {
+      if (FabricLoader.getInstance().isModLoaded(MOD_ID)) {
+         info("a regular AstralVisuals mod is already installed; dynamic loading is disabled");
+         return;
       }
-   }
 
-   static int run(String[] args, Map<String, String> environment, Path workingDirectory, PrintStream out, PrintStream err) {
-      Options options;
+      Path cacheDirectory = FabricLoader.getInstance().getGameDir().resolve(CACHE_DIRECTORY).toAbsolutePath().normalize();
+      Path clientPath;
       try {
-         options = Options.parse(args);
-      } catch (IllegalArgumentException exception) {
-         err.println("AstralInstaller: " + exception.getMessage());
-         printUsage(err);
-         return 2;
-      }
-      if (options.help()) {
-         printUsage(out);
-         return 0;
-      }
-
-      Path modsDirectory = resolveModsDirectory(options.modsDirectory(), environment, workingDirectory);
-      List<ClientJar> installed;
-      try {
-         Files.createDirectories(modsDirectory);
-         if (!Files.isDirectory(modsDirectory)) {
-            throw new IOException("mods path is not a directory");
-         }
-         installed = discoverClientJars(modsDirectory);
-      } catch (Exception exception) {
-         err.println("AstralInstaller: cannot access " + modsDirectory + ": " + message(exception));
-         return 1;
-      }
-
-      out.println("AstralInstaller: checking GitHub before Minecraft starts...");
-      try {
-         URI releaseUri = releaseUri(environment);
-         UpdateResult result = update(modsDirectory, releaseUri);
+         UpdateResult result = update(cacheDirectory, releaseUri());
+         clientPath = result.client().path();
          if (result.updated()) {
-            String previous = result.previousVersion() == null ? "not installed" : result.previousVersion();
-            out.println("AstralInstaller: installed " + result.version() + " (previous: " + previous + ").");
+            info("downloaded AstralVisuals " + result.client().version());
          } else {
-            out.println("AstralInstaller: AstralVisuals " + result.version() + " is already up to date.");
+            info("AstralVisuals " + result.client().version() + " is up to date");
          }
-         return 0;
-      } catch (InstallationException exception) {
-         err.println("AstralInstaller: local installation failed; Minecraft launch was stopped: " + message(exception));
-         return 1;
-      } catch (Exception exception) {
-         if (!installed.isEmpty()) {
-            ClientJar current = newest(installed);
-            err.println(
-               "AstralInstaller: update check failed (" + message(exception) + "). Continuing with installed " + current.version() + "."
+      } catch (Exception updateFailure) {
+         Optional<ClientJar> cached = readClientJar(cacheDirectory.resolve(CLIENT_FILE));
+         if (cached.isEmpty()) {
+            throw new IllegalStateException(
+               "AstralInstaller could not download AstralVisuals and no valid cached client exists",
+               updateFailure
             );
-            return 0;
          }
-         err.println("AstralInstaller: no client is installed and GitHub could not be reached: " + message(exception));
-         return 1;
+         clientPath = cached.get().path();
+         warn("GitHub check failed; using cached AstralVisuals " + cached.get().version() + ": " + message(updateFailure));
+      }
+
+      try {
+         ClientJar client = verifyClientJar(clientPath, null);
+         Knot.getLauncher().addToClassPath(client.path());
+         attachPayloadResources(client.path());
+         Mixins.addConfiguration(MIXIN_CONFIGURATION);
+         reloadMixinTransformer();
+         System.setProperty(CLIENT_VERSION_PROPERTY, client.version());
+         payloadReady = true;
+         info("AstralVisuals " + client.version() + " attached to the current Minecraft launch");
+      } catch (Exception exception) {
+         throw new IllegalStateException("AstralInstaller could not attach the downloaded client", exception);
       }
    }
 
-   private static URI releaseUri(Map<String, String> environment) {
-      String override = environment.get("ASTRAL_RELEASE_API");
+   /** Runs at Fabric's normal mod-initialization point, after the payload was attached in pre-launch. */
+   @Override
+   public void onInitialize() {
+      if (!payloadReady) {
+         return;
+      }
+
+      try {
+         Class<?> entrypointClass = getClass().getClassLoader().loadClass(CLIENT_ENTRYPOINT);
+         Object entrypoint = entrypointClass.getDeclaredConstructor().newInstance();
+         if (!(entrypoint instanceof ModInitializer initializer)) {
+            throw new IllegalStateException(CLIENT_ENTRYPOINT + " does not implement ModInitializer");
+         }
+         initializer.onInitialize();
+      } catch (Exception exception) {
+         throw new IllegalStateException("AstralInstaller could not initialize AstralVisuals", exception);
+      }
+   }
+
+   private static URI releaseUri() {
+      String override = System.getProperty(RELEASE_API_PROPERTY);
       return override == null || override.isBlank() ? LATEST_RELEASE : URI.create(override);
    }
 
-   static UpdateResult update(Path modsDirectory, URI releaseUri) throws Exception {
-      Path normalizedMods = modsDirectory.toAbsolutePath().normalize();
-      Files.createDirectories(normalizedMods);
-      List<ClientJar> installed = discoverClientJars(normalizedMods);
-      ClientJar current = installed.isEmpty() ? null : newest(installed);
+   static UpdateResult update(Path cacheDirectory, URI releaseUri) throws Exception {
+      Path normalizedCache = cacheDirectory.toAbsolutePath().normalize();
+      Files.createDirectories(normalizedCache);
+      Path target = normalizedCache.resolve(CLIENT_FILE);
+      Optional<ClientJar> current = readClientJar(target);
 
       HttpClient client = HttpClient.newBuilder()
          .connectTimeout(Duration.ofSeconds(10))
@@ -120,80 +137,69 @@ public final class AstralInstaller {
       ReleaseAsset asset = selectClientAsset(release);
       validateAsset(asset);
 
-      if (current != null && compareVersions(current.version(), release.version()) >= 0) {
-         cleanupDuplicates(installed, current.path());
-         return new UpdateResult(false, current.version(), current.version(), current.path());
+      if (current.isPresent() && compareVersions(current.get().version(), release.version()) >= 0) {
+         return new UpdateResult(false, current.get());
       }
 
-      Path pending = Files.createTempFile(normalizedMods, ".astralvisuals-download-", ".jar.part");
+      Path pending = Files.createTempFile(normalizedCache, ".client-download-", ".jar.part");
       try {
          download(client, asset.url(), pending);
-         verifyClientJar(pending, release.version());
+         ClientJar downloaded = verifyClientJar(pending, release.version());
          verifyDigestIfPresent(pending, asset.digest());
-         Path installedPath = installDownloadedJar(normalizedMods, pending, asset.name(), installed);
-         return new UpdateResult(true, normalizeVersion(release.version()), current == null ? null : current.version(), installedPath);
+         installDownloadedJar(pending, target);
+         return new UpdateResult(true, new ClientJar(target, downloaded.version()));
       } finally {
          Files.deleteIfExists(pending);
       }
    }
 
-   static Path resolveModsDirectory(Path explicit, Map<String, String> environment, Path workingDirectory) {
-      if (explicit != null) {
-         return explicit.toAbsolutePath().normalize();
-      }
-      String configured = environment.get("ASTRAL_MODS_DIR");
-      if (configured != null && !configured.isBlank()) {
-         return Path.of(configured).toAbsolutePath().normalize();
-      }
-      String prismMinecraftDirectory = environment.get("INST_MC_DIR");
-      if (prismMinecraftDirectory != null && !prismMinecraftDirectory.isBlank()) {
-         return Path.of(prismMinecraftDirectory).resolve("mods").toAbsolutePath().normalize();
-      }
-      Path normalizedWorkingDirectory = workingDirectory.toAbsolutePath().normalize();
-      Path fileName = normalizedWorkingDirectory.getFileName();
-      return fileName != null && fileName.toString().equalsIgnoreCase("mods")
-         ? normalizedWorkingDirectory
-         : normalizedWorkingDirectory.resolve("mods");
-   }
-
-   static List<ClientJar> discoverClientJars(Path modsDirectory) throws IOException {
-      if (!Files.isDirectory(modsDirectory)) {
-         return List.of();
-      }
-      List<ClientJar> clients = new ArrayList<>();
-      try (var paths = Files.list(modsDirectory)) {
-         for (Path path : paths.filter(Files::isRegularFile).sorted().toList()) {
-            if (!path.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".jar")) {
-               continue;
-            }
-            readClientJar(path).ifPresent(clients::add);
-         }
-      }
-      return clients;
-   }
-
    private static Optional<ClientJar> readClientJar(Path path) {
-      try (JarFile jar = new JarFile(path.toFile())) {
-         JarEntry metadataEntry = jar.getJarEntry("fabric.mod.json");
-         if (metadataEntry == null || metadataEntry.getSize() > MAX_METADATA_BYTES) {
-            return Optional.empty();
-         }
-         byte[] metadataBytes;
-         try (InputStream input = jar.getInputStream(metadataEntry)) {
-            metadataBytes = input.readNBytes(MAX_METADATA_BYTES + 1);
-         }
-         if (metadataBytes.length > MAX_METADATA_BYTES) {
-            return Optional.empty();
-         }
-         String metadata = new String(metadataBytes, StandardCharsets.UTF_8);
+      if (!Files.isRegularFile(path)) {
+         return Optional.empty();
+      }
+      try {
+         return Optional.of(verifyClientJar(path, null));
+      } catch (Exception ignored) {
+         return Optional.empty();
+      }
+   }
+
+   static ClientJar verifyClientJar(Path path, String expectedVersion) throws IOException {
+      Path normalized = path.toAbsolutePath().normalize();
+      try (JarFile jar = new JarFile(normalized.toFile())) {
+         String metadata = readSmallEntry(jar, "fabric.mod.json");
          String id = jsonStringField(metadata, "id");
          String version = jsonStringField(metadata, "version");
          if (!MOD_ID.equals(id) || version == null || version.isBlank()) {
-            return Optional.empty();
+            throw new IOException("downloaded file is not an AstralVisuals client");
          }
-         return Optional.of(new ClientJar(path.toAbsolutePath().normalize(), normalizeVersion(version)));
-      } catch (Exception ignored) {
-         return Optional.empty();
+         String normalizedVersion = normalizeVersion(version);
+         if (expectedVersion != null && !normalizeVersion(expectedVersion).equals(normalizedVersion)) {
+            throw new IOException("client version does not match the GitHub Release tag");
+         }
+         requireEntry(jar, "pl/astralvisuals/Force.class");
+         requireEntry(jar, MIXIN_CONFIGURATION);
+         return new ClientJar(normalized, normalizedVersion);
+      }
+   }
+
+   private static String readSmallEntry(JarFile jar, String name) throws IOException {
+      JarEntry entry = jar.getJarEntry(name);
+      if (entry == null || entry.getSize() > MAX_METADATA_BYTES) {
+         throw new IOException("client is missing " + name);
+      }
+      try (InputStream input = jar.getInputStream(entry)) {
+         byte[] bytes = input.readNBytes(MAX_METADATA_BYTES + 1);
+         if (bytes.length > MAX_METADATA_BYTES) {
+            throw new IOException(name + " is unexpectedly large");
+         }
+         return new String(bytes, StandardCharsets.UTF_8);
+      }
+   }
+
+   private static void requireEntry(JarFile jar, String name) throws IOException {
+      if (jar.getJarEntry(name) == null) {
+         throw new IOException("client is missing " + name);
       }
    }
 
@@ -248,12 +254,9 @@ public final class AstralInstaller {
       if (!isSafeFileName(asset.name()) || !isClientJarName(asset.name())) {
          throw new IOException("GitHub asset has an unsafe file name");
       }
-      String scheme = asset.url().getScheme();
-      String host = asset.url().getHost();
       String path = asset.url().getPath();
-      if (!"https".equalsIgnoreCase(scheme)
-         || host == null
-         || !host.equalsIgnoreCase("github.com")
+      if (!"https".equalsIgnoreCase(asset.url().getScheme())
+         || !"github.com".equalsIgnoreCase(asset.url().getHost())
          || path == null
          || !path.toLowerCase(Locale.ROOT).startsWith(REPOSITORY_RELEASE_PATH.toLowerCase(Locale.ROOT))) {
          throw new IOException("GitHub asset URL is outside the AstralVisuals repository");
@@ -294,14 +297,7 @@ public final class AstralInstaller {
       }
    }
 
-   static void verifyClientJar(Path jarPath, String expectedVersion) throws IOException {
-      ClientJar client = readClientJar(jarPath).orElseThrow(() -> new IOException("downloaded file is not an AstralVisuals Fabric mod"));
-      if (!normalizeVersion(expectedVersion).equals(client.version())) {
-         throw new IOException("downloaded JAR version does not match the GitHub Release tag");
-      }
-   }
-
-   static void verifyDigestIfPresent(Path jarPath, String digest) throws Exception {
+   static void verifyDigestIfPresent(Path path, String digest) throws Exception {
       if (digest == null || digest.isBlank()) {
          return;
       }
@@ -309,9 +305,8 @@ public final class AstralInstaller {
       if (!lowerDigest.matches("sha256:[0-9a-f]{64}")) {
          throw new IOException("GitHub supplied an invalid SHA-256 digest");
       }
-      String expected = lowerDigest.substring("sha256:".length());
       MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-      try (InputStream input = Files.newInputStream(jarPath)) {
+      try (InputStream input = Files.newInputStream(path)) {
          byte[] buffer = new byte[64 * 1024];
          int read;
          while ((read = input.read(buffer)) >= 0) {
@@ -319,101 +314,61 @@ public final class AstralInstaller {
          }
       }
       String actual = HexFormat.of().formatHex(sha256.digest());
+      String expected = lowerDigest.substring("sha256:".length());
       if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.US_ASCII), actual.getBytes(StandardCharsets.US_ASCII))) {
          throw new IOException("GitHub SHA-256 verification failed");
       }
    }
 
-   private static Path installDownloadedJar(Path modsDirectory, Path pending, String assetName, List<ClientJar> installed)
-      throws InstallationException {
-      Path target = modsDirectory.resolve(assetName).toAbsolutePath().normalize();
-      if (!target.getParent().equals(modsDirectory.toAbsolutePath().normalize())) {
-         throw new InstallationException("release asset escapes the mods directory");
-      }
-      if (Files.exists(target) && installed.stream().noneMatch(client -> client.path().equals(target))) {
-         throw new InstallationException("refusing to overwrite an unrelated file: " + target.getFileName());
-      }
-
-      Map<Path, Path> backups = new LinkedHashMap<>();
-      boolean newJarInstalled = false;
+   private static void installDownloadedJar(Path pending, Path target) throws IOException {
       try {
-         for (ClientJar client : installed) {
-            Path backup = client.path().resolveSibling(
-               client.path().getFileName() + ".astralinstaller-backup-" + UUID.randomUUID()
-            );
-            move(client.path(), backup, false);
-            backups.put(client.path(), backup);
-         }
-         move(pending, target, false);
-         newJarInstalled = true;
-      } catch (Exception exception) {
-         if (newJarInstalled) {
-            try {
-               Files.deleteIfExists(target);
-            } catch (IOException ignored) {
-            }
-         }
-         restoreBackups(backups);
-         throw new InstallationException(message(exception), exception);
-      }
-
-      for (Path backup : backups.values()) {
-         try {
-            Files.deleteIfExists(backup);
-         } catch (IOException ignored) {
-            backup.toFile().deleteOnExit();
-         }
-      }
-      return target;
-   }
-
-   private static void cleanupDuplicates(List<ClientJar> installed, Path keep) throws InstallationException {
-      for (ClientJar client : installed) {
-         if (!client.path().equals(keep)) {
-            try {
-               Files.deleteIfExists(client.path());
-            } catch (IOException exception) {
-               throw new InstallationException("could not remove duplicate " + client.path().getFileName(), exception);
-            }
-         }
+         Files.move(pending, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      } catch (AtomicMoveNotSupportedException ignored) {
+         Files.move(pending, target, StandardCopyOption.REPLACE_EXISTING);
       }
    }
 
-   private static void restoreBackups(Map<Path, Path> backups) {
-      List<Map.Entry<Path, Path>> entries = new ArrayList<>(backups.entrySet());
-      for (int index = entries.size() - 1; index >= 0; index--) {
-         Map.Entry<Path, Path> entry = entries.get(index);
-         if (!Files.exists(entry.getValue())) {
-            continue;
-         }
-         try {
-            move(entry.getValue(), entry.getKey(), true);
-         } catch (IOException ignored) {
-         }
+   /**
+    * Adds the payload as a second root of the installer mod so Fabric Resource Loader
+    * exposes its assets, shaders and sounds in the normal {@code fabric} resource pack.
+    */
+   private static void attachPayloadResources(Path clientPath) throws ReflectiveOperationException {
+      Object container = FabricLoader.getInstance()
+         .getModContainer("astralinstaller")
+         .orElseThrow(() -> new IllegalStateException("AstralInstaller mod container is missing"));
+      Field codeSourcePaths = container.getClass().getDeclaredField("codeSourcePaths");
+      codeSourcePaths.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      List<Path> existing = (List<Path>)codeSourcePaths.get(container);
+      List<Path> combined = new ArrayList<>(existing);
+      if (!combined.contains(clientPath)) {
+         combined.add(clientPath);
       }
+      codeSourcePaths.set(container, List.copyOf(combined));
+
+      Field roots = container.getClass().getDeclaredField("roots");
+      roots.setAccessible(true);
+      roots.set(container, null);
    }
 
-   private static void move(Path source, Path target, boolean replace) throws IOException {
-      StandardCopyOption[] atomicOptions = replace
-         ? new StandardCopyOption[] {StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING}
-         : new StandardCopyOption[] {StandardCopyOption.ATOMIC_MOVE};
-      StandardCopyOption[] fallbackOptions = replace
-         ? new StandardCopyOption[] {StandardCopyOption.REPLACE_EXISTING}
-         : new StandardCopyOption[0];
-      try {
-         Files.move(source, target, atomicOptions);
-      } catch (AtomicMoveNotSupportedException exception) {
-         Files.move(source, target, fallbackOptions);
+   /** Makes a configuration added after Mixin bootstrap visible before the first game class is transformed. */
+   private static void reloadMixinTransformer() throws ReflectiveOperationException {
+      ClassLoader classLoader = AstralInstaller.class.getClassLoader();
+      Object delegate = readField(classLoader, "delegate");
+      Object transformer = readField(delegate, "mixinTransformer");
+      if (transformer == null || !"org.spongepowered.asm.mixin.transformer.MixinTransformer".equals(transformer.getClass().getName())) {
+         throw new IllegalStateException("unsupported Mixin transformer: " + (transformer == null ? "null" : transformer.getClass().getName()));
       }
+      Object processor = readField(transformer, "processor");
+      Field transformedCount = processor.getClass().getDeclaredField("transformedCount");
+      transformedCount.setAccessible(true);
+      transformedCount.setInt(processor, 0);
    }
 
-   private static ClientJar newest(List<ClientJar> clients) {
-      return clients.stream()
-         .max((left, right) -> {
-            int version = compareVersions(left.version(), right.version());
-            return version != 0 ? version : right.path().toString().compareTo(left.path().toString());
-         })
-         .orElseThrow();
+   private static Object readField(Object owner, String name) throws ReflectiveOperationException {
+      Field field = owner.getClass().getDeclaredField(name);
+      field.setAccessible(true);
+      return field.get(owner);
    }
 
    private static boolean isClientJarName(String name) {
@@ -467,9 +422,7 @@ public final class AstralInstaller {
    }
 
    private static String jsonStringField(String json, String field) {
-      Pattern pattern = Pattern.compile(
-         "\\\"" + Pattern.quote(field) + "\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"\\\\])*)\\\""
-      );
+      Pattern pattern = Pattern.compile("\\\"" + Pattern.quote(field) + "\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"\\\\])*)\\\"");
       Matcher matcher = pattern.matcher(json);
       return matcher.find() ? unescapeJson(matcher.group(1)) : null;
    }
@@ -481,12 +434,9 @@ public final class AstralInstaller {
          throw new IOException("GitHub Release has no " + field + " array");
       }
       int start = json.indexOf('[', matcher.end());
-      if (start < 0) {
-         throw new IOException("GitHub Release has an invalid " + field + " array");
-      }
-      int end = findMatching(json, start, '[', ']');
+      int end = start < 0 ? -1 : findMatching(json, start, '[', ']');
       if (end < 0) {
-         throw new IOException("GitHub Release has an unterminated " + field + " array");
+         throw new IOException("GitHub Release has an invalid " + field + " array");
       }
       return json.substring(start + 1, end);
    }
@@ -507,9 +457,7 @@ public final class AstralInstaller {
             } else if (value == '"') {
                inString = false;
             }
-            continue;
-         }
-         if (value == '"') {
+         } else if (value == '"') {
             inString = true;
          } else if (value == '{') {
             if (depth++ == 0) {
@@ -582,9 +530,12 @@ public final class AstralInstaller {
       return message == null || message.isBlank() ? throwable.getClass().getSimpleName() : message;
    }
 
-   private static void printUsage(PrintStream output) {
-      output.println("Usage: java -jar astralinstaller.jar [--mods-dir <path>]");
-      output.println("PrismLauncher: INST_MC_DIR is detected automatically by the pre-launch command.");
+   private static void info(String message) {
+      System.out.println("[AstralInstaller] " + message);
+   }
+
+   private static void warn(String message) {
+      System.err.println("[AstralInstaller] " + message);
    }
 
    record ClientJar(Path path, String version) {
@@ -596,41 +547,6 @@ public final class AstralInstaller {
    record ReleaseAsset(String name, URI url, String digest) {
    }
 
-   record UpdateResult(boolean updated, String version, String previousVersion, Path installedPath) {
-   }
-
-   private record Options(Path modsDirectory, boolean help) {
-      private static Options parse(String[] args) {
-         Path modsDirectory = null;
-         boolean help = false;
-         for (int index = 0; index < args.length; index++) {
-            String argument = args[index];
-            if (argument.equals("--help") || argument.equals("-h")) {
-               help = true;
-            } else if (argument.equals("--mods-dir")) {
-               if (++index >= args.length) {
-                  throw new IllegalArgumentException("--mods-dir requires a path");
-               }
-               modsDirectory = Path.of(args[index]);
-            } else if (argument.startsWith("--mods-dir=")) {
-               modsDirectory = Path.of(argument.substring("--mods-dir=".length()));
-            } else if (!argument.startsWith("-") && modsDirectory == null) {
-               modsDirectory = Path.of(argument);
-            } else {
-               throw new IllegalArgumentException("unknown argument: " + argument);
-            }
-         }
-         return new Options(modsDirectory, help);
-      }
-   }
-
-   static final class InstallationException extends Exception {
-      private InstallationException(String message) {
-         super(message);
-      }
-
-      private InstallationException(String message, Throwable cause) {
-         super(message, cause);
-      }
+   record UpdateResult(boolean updated, ClientJar client) {
    }
 }

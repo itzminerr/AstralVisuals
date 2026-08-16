@@ -27,10 +27,10 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
-      - name: Build client and standalone installer
+      - name: Build client and Fabric installer
         shell: bash
         run: bash ./gradlew build installerSmokeTest --no-daemon --console=plain
 
-      - name: Verify standalone entry point
+      - name: Verify Fabric installer metadata
         shell: bash
-        run: java -jar astralinstaller.jar --help
+        run: jar --list --file astralinstaller.jar | grep -E 'fabric.mod.json|AstralInstaller.class|accesswidener'

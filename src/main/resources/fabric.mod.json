@@ -29,12 +29,5 @@
     "fabric": "*",
     "minecraft": "~1.21.4"
   },
-  "jars": [
-    {
-      "file": "META-INF/jars/jna-5.13.0.jar"
-    },
-    {
-      "file": "META-INF/jars/jna-platform-5.13.0.jar"
-    }
-  ]
+  "jars": []
 }
