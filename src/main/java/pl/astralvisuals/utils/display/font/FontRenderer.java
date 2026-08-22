@@ -286,7 +286,10 @@ public class FontRenderer implements QuickImports {
 
    private FontRenderer getScaledRenderer(float scale) {
       int sourceSize = Math.max(1, Math.round(this.font.getSize2D()));
-      int targetSize = Math.max(1, (int)Math.ceil(this.font.getSize2D() * scale));
+      // Never rasterize below the source resolution. Downscaling a full-size,
+      // linearly filtered atlas is considerably sharper than first creating
+      // undersized glyphs and then stretching them onto fractional pixels.
+      int targetSize = Math.max(sourceSize, (int)Math.ceil(this.font.getSize2D() * scale));
       if (targetSize == sourceSize) {
          return this;
       }

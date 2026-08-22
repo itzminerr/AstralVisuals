@@ -17,12 +17,15 @@ public class ChatMessage {
 
    public static void brandmessage(String message) {
       if (class_310.method_1551().field_1724 != null) {
-         class_5250 prefix = class_2561.method_43470("[");
-         prefix.method_10852(TextHelper.applyPredefinedGradient("ᴀsᴛʀᴀʟᴠɪsᴜᴀʟs", "light_cyan", true));
-         prefix.method_10852(class_2561.method_43470("] "));
-         prefix.method_10852(class_2561.method_43470("» ").method_27694(s -> s.method_10977(class_124.field_1063)));
-         class_2561 formattedMessage = prefix.method_27661().method_10852(class_2561.method_43470(message));
-         class_310.method_1551().field_1724.method_7353(formattedMessage, false);
+         class_310.method_1551().field_1724.method_7353(brandmessageText(message), false);
       }
+   }
+
+   public static class_5250 brandmessageText(String message) {
+      class_5250 prefix = class_2561.method_43470("[");
+      prefix.method_10852(TextHelper.applyPredefinedGradient("ᴀsᴛʀᴀʟᴠɪsᴜᴀʟs", "light_cyan", true));
+      prefix.method_10852(class_2561.method_43470("] "));
+      prefix.method_10852(class_2561.method_43470("» ").method_27694(s -> s.method_10977(class_124.field_1063)));
+      return prefix.method_27661().method_10852(class_2561.method_43470(message));
    }
 }

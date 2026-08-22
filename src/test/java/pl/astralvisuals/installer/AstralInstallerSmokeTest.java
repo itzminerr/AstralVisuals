@@ -29,7 +29,7 @@ public final class AstralInstallerSmokeTest {
    }
 
    private static void testVersionComparison() {
-      require(AstralInstaller.compareVersions("v2.4", "2.3") > 0, "version increment was not detected");
+      require(AstralInstaller.compareVersions("v2.5", "2.4") > 0, "version increment was not detected");
       require(AstralInstaller.compareVersions("2.2", "v2.2") == 0, "v prefix changed equality");
       require(AstralInstaller.compareVersions("2.2.1", "2.2") > 0, "patch comparison failed");
       require(AstralInstaller.compareVersions("2.2-beta", "2.2") < 0, "pre-release must be older than stable");

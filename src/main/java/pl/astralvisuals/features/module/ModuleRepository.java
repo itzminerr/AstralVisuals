@@ -13,6 +13,7 @@ import pl.astralvisuals.features.impl.movement.CrystalOptimizer;
 import pl.astralvisuals.features.impl.movement.Cooldowns;
 import pl.astralvisuals.features.impl.movement.DiscordPresence;
 import pl.astralvisuals.features.impl.movement.EggMan;
+import pl.astralvisuals.features.impl.movement.ExtraScreenshot;
 import pl.astralvisuals.features.impl.movement.HitSound;
 import pl.astralvisuals.features.impl.movement.ItemHighlighter;
 import pl.astralvisuals.features.impl.movement.ItemScroller;
@@ -64,6 +65,7 @@ public class ModuleRepository {
          new Cooldowns(),
          new DiscordPresence(),
          new EggMan(),
+         new ExtraScreenshot(),
          new HitSound(),
          new ItemHighlighter(),
          new ItemScroller(),

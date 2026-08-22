@@ -107,6 +107,8 @@ public final class MediaPlayer extends AbstractDraggable {
       FontRenderer titleFont = Fonts.getSize(14, Fonts.Type.BOLD);
       FontRenderer textFont = Fonts.getSize(12, Fonts.Type.DEFAULT);
       FontRenderer smallFont = Fonts.getSize(10, Fonts.Type.DEFAULT);
+      FontRenderer controlFont = Fonts.getSize(17, Fonts.Type.DEFAULT);
+      FontRenderer playbackFont = Fonts.getSize(20, Fonts.Type.DEFAULT);
 
       GlassStyle.strongBackdrop(matrix, x, y, CARD_WIDTH, CARD_HEIGHT, 9.0F);
       if (this.artworkRegistered) {
@@ -135,14 +137,14 @@ public final class MediaPlayer extends AbstractDraggable {
          rectangle.render(ShapeProperties.create(matrix, contentX, progressY, progressWidth, 2.5F).round(1.5F).color(GlassStyle.accentMid()).build());
       }
 
-      float buttonY = y + 34.0F;
-      this.previous.set(contentX, buttonY, 15.0F, 12.0F);
-      this.playPause.set(contentX + 19.0F, buttonY, 18.0F, 12.0F);
-      this.next.set(contentX + 41.0F, buttonY, 15.0F, 12.0F);
+      float buttonY = y + 33.0F;
+      this.previous.set(contentX, buttonY, 18.0F, 14.0F);
+      this.playPause.set(contentX + 16.0F, buttonY, 20.0F, 14.0F);
+      this.next.set(contentX + 34.0F, buttonY, 18.0F, 14.0F);
       boolean active = this.session != null;
-      this.drawButton(matrix, smallFont, this.previous, "<", active, false);
-      this.drawPlaybackButton(matrix, this.playPause, active, info.getPlaying());
-      this.drawButton(matrix, smallFont, this.next, ">", active, false);
+      this.drawSkipButton(matrix, controlFont, this.previous, active, false);
+      this.drawPlaybackButton(matrix, playbackFont, this.playPause, active, info.getPlaying());
+      this.drawSkipButton(matrix, controlFont, this.next, active, true);
 
       String time = this.updateTimeCache(info);
       smallFont.drawString(matrix, time, x + CARD_WIDTH - 5.0F - smallFont.getStringWidth(time), y + 41.0F, ColorAssist.getText(0.55F));
@@ -168,23 +170,28 @@ public final class MediaPlayer extends AbstractDraggable {
       return super.mouseClicked(mouseX, mouseY, button);
    }
 
-   private void drawButton(class_4587 matrix, FontRenderer font, ControlButton button, String label, boolean active, boolean accent) {
-      GlassStyle.button(matrix, button.x, button.y, button.width, button.height, 4.0F, 0.0F);
-      int color = active ? (accent ? GlassStyle.accentStart() : ColorAssist.getText()) : ColorAssist.getText(0.35F);
-      font.drawString(matrix, label, button.x + (button.width - font.getStringWidth(label)) / 2.0F, button.y + 5.0F, color);
+   private void drawSkipButton(class_4587 matrix, FontRenderer font, ControlButton button, boolean active, boolean pointsRight) {
+      int color = active ? ColorAssist.getText() : ColorAssist.getText(0.35F);
+      String icon = pointsRight ? "▶" : "◀";
+      float centerX = button.x + button.width / 2.0F;
+      this.drawCenteredControlGlyph(matrix, font, icon, centerX - 2.6F, button.y, color);
+      this.drawCenteredControlGlyph(matrix, font, icon, centerX + 2.6F, button.y, color);
    }
 
-   private void drawPlaybackButton(class_4587 matrix, ControlButton button, boolean active, boolean playing) {
-      GlassStyle.button(matrix, button.x, button.y, button.width, button.height, 4.0F, 0.0F);
-      int color = active ? GlassStyle.accentStart() : ColorAssist.getText(0.35F);
+   private void drawPlaybackButton(class_4587 matrix, FontRenderer font, ControlButton button, boolean active, boolean playing) {
+      int color = active ? ColorAssist.getText() : ColorAssist.getText(0.35F);
       float centerX = button.x + button.width / 2.0F;
       float centerY = button.y + button.height / 2.0F;
       if (playing) {
-         rectangle.render(ShapeProperties.create(matrix, centerX - 2.6F, centerY - 3.0F, 1.6F, 6.0F).round(0.6F).color(color).build());
-         rectangle.render(ShapeProperties.create(matrix, centerX + 1.0F, centerY - 3.0F, 1.6F, 6.0F).round(0.6F).color(color).build());
+         rectangle.render(ShapeProperties.create(matrix, centerX - 4.0F, centerY - 3.0F, 8.0F, 8.0F).round(0.7F).color(color).build());
       } else {
-         rectangle.render(ShapeProperties.create(matrix, centerX - 2.5F, centerY - 2.5F, 5.0F, 5.0F).round(1.0F).color(color).build());
+         String icon = "▶";
+         this.drawCenteredControlGlyph(matrix, font, icon, centerX, button.y, color);
       }
+   }
+
+   private void drawCenteredControlGlyph(class_4587 matrix, FontRenderer font, String icon, float centerX, float buttonY, int color) {
+      font.drawString(matrix, icon, centerX - font.getStringWidth(icon) / 2.0F, buttonY + 5.5F, color);
    }
 
    private boolean isInside(ControlButton button, double mouseX, double mouseY) {
@@ -353,6 +360,7 @@ public final class MediaPlayer extends AbstractDraggable {
          return;
       }
       class_1043 texture = new class_1043(image);
+      texture.method_4527(true, false);
       boolean registered = false;
       try {
          mc.method_1531().method_4615(ARTWORK_TEXTURE);

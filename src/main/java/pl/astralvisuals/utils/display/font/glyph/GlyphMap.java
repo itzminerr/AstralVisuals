@@ -148,6 +148,9 @@ public class GlyphMap {
          }
 
          class_1043 texture = new class_1043(nativeImage);
+         // HUD and ClickGUI support fractional scaling. Nearest-neighbour
+         // sampling makes the glyph atlas visibly pixelated at those scales.
+         texture.method_4527(true, false);
          texture.method_4524();
          if (RenderSystem.isOnRenderThread()) {
             class_310.method_1551().method_1531().method_4616(textureIdentifier, texture);

@@ -31,6 +31,7 @@
   "client": [
     "client.IMinecraftClient",
     "client.MinecraftClientMixin",
+    "client.ScreenshotRecorderMixin",
     "client.display.background.BackGroundRendererMixin",
     "client.display.text.TextVisitFactoryMixin",
     "client.screen.IScreen",
