@@ -3,6 +3,7 @@ package pl.astralvisuals.features.impl.render;
 import java.awt.Color;
 import pl.astralvisuals.features.module.Module;
 import pl.astralvisuals.features.module.ModuleCategory;
+import pl.astralvisuals.features.module.setting.implement.BooleanSetting;
 import pl.astralvisuals.features.module.setting.implement.ColorSetting;
 import pl.astralvisuals.features.module.setting.implement.MultiSelectSetting;
 import pl.astralvisuals.features.module.setting.implement.SliderSettings;
@@ -29,9 +30,27 @@ public class Interface extends Module {
       .value(NOTIFICATION_MODULES)
       .selected(NOTIFICATION_MODULES)
       .visible(() -> this.interfaceSettings.isSelected(ELEMENT_NOTIFICATIONS));
-   public final ColorSetting colorSetting = new ColorSetting("Цвет интерфейса", "Основной цвет клиента")
-      .setColor(new Color(18, 18, 20, 255).getRGB())
-      .presets(-15790318, -15066595, -14408664, -13421766);
+   public final ColorSetting colorSetting = new ColorSetting("Цвет интерфейса", "Основной цвет стекла интерфейса")
+      .setColor(new Color(221, 231, 255).getRGB())
+      .presets(-2298371, -1, -4934476, -3342337);
+   public final BooleanSetting secondColorSetting = new BooleanSetting("Второй цвет", "Включает второй цвет для углового градиента стекла");
+   public final ColorSetting secondGlassColor = new ColorSetting("Цвет 2", "Второй цвет градиента стекла")
+      .setColor(new Color(255, 50, 150).getRGB())
+      .visible(() -> this.secondColorSetting.isValue());
+    public final SliderSettings roundScale = new SliderSettings("Скругление углов", "Множитель скругления углов панелей")
+       .range(0.0F, 1.0F)
+       .setValue(0.5F);
+   public final SliderSettings backdropBlur = new SliderSettings("Размытие фона", "Сила размытия мира за стеклом")
+      .range(0, 64)
+      .setValue(18.0F);
+   public final SliderSettings glassDensity = new SliderSettings("Плотность стекла", "Насколько плотно стекло перекрывает фон")
+      .range(0.25F, 1.0F)
+      .setValue(0.78F);
+   public final BooleanSetting glowEnabled = new BooleanSetting("Свечение", "Рисует мягкое свечение вокруг стеклянных панелей");
+   public final SliderSettings glowIntensity = new SliderSettings("Яркость свечения", "Яркость свечения панелей")
+      .range(0.05F, 1.0F)
+      .setValue(0.4F)
+      .visible(() -> this.glowEnabled.isValue());
    public final SliderSettings scaleSetting = new SliderSettings("Размер HUD", "Общий масштаб элементов HUD")
       .range(0.5F, 2.0F)
       .setValue(1.0F);
@@ -49,7 +68,33 @@ public class Interface extends Module {
 
    public Interface() {
       super("Interface", "Interface", ModuleCategory.RENDER);
-      this.setup(this.colorSetting, this.scaleSetting, this.guiScaleSetting, this.interfaceSettings, this.notificationSettings, this.soundVolumeSetting);
+      this.setup(this.colorSetting, this.secondColorSetting, this.secondGlassColor, this.roundScale,
+         this.backdropBlur, this.glassDensity, this.glowEnabled, this.glowIntensity,
+         this.scaleSetting, this.guiScaleSetting, this.interfaceSettings, this.notificationSettings, this.soundVolumeSetting);
+   }
+
+   public float getRoundScale() {
+      return this.roundScale.getValue();
+   }
+
+   public float getBackdropBlur() {
+      return this.backdropBlur.getValue();
+   }
+
+   public float getGlassDensity() {
+      return this.glassDensity.getValue();
+   }
+
+   public boolean isSecondColor() {
+      return this.secondColorSetting.isValue();
+   }
+
+   public boolean isGlow() {
+      return this.glowEnabled.isValue();
+   }
+
+   public float getGlowIntensity() {
+      return this.glowIntensity.getValue();
    }
 
    public float getHudScale() {

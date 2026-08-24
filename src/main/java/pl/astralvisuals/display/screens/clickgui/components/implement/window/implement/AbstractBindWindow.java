@@ -7,6 +7,7 @@ import pl.astralvisuals.utils.client.chat.StringHelper;
 import pl.astralvisuals.utils.display.color.ColorAssist;
 import pl.astralvisuals.utils.display.font.Fonts;
 import pl.astralvisuals.utils.display.shape.ShapeProperties;
+import pl.astralvisuals.utils.display.style.GlassStyle;
 import pl.astralvisuals.utils.math.calc.Calculate;
 
 public abstract class AbstractBindWindow extends AbstractWindow {
@@ -23,15 +24,7 @@ public abstract class AbstractBindWindow extends AbstractWindow {
    @Override
    public void drawWindow(class_332 context, int mouseX, int mouseY, float delta) {
       class_4587 matrix = context.method_51448();
-      rectangle.render(ShapeProperties.create(matrix, this.x, this.y, this.width, this.height).round(4.0F).softness(25.0F).color(838860800).build());
-      rectangle.render(
-         ShapeProperties.create(matrix, this.x, this.y, this.width, this.height)
-            .round(4.0F)
-            .thickness(2.0F)
-            .outlineColor(ColorAssist.getOutline(0.8F, 1.0F))
-            .color(ColorAssist.getRect(1.0F))
-            .build()
-      );
+      GlassStyle.strongBackdrop(matrix, this.x, this.y, this.width, this.height, 8.0F);
       Fonts.getSize(14).drawString(matrix, "Bind Settings", this.x + 5.0F, this.y + 8.0F, -1);
       image.setTexture("textures/trash.png").render(ShapeProperties.create(matrix, this.x + this.width - 13.0F, this.y + 5.3F, 8.0, 8.0).build());
       this.drawKeyButton(matrix);

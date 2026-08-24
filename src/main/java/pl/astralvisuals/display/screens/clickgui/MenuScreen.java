@@ -83,15 +83,15 @@ public class MenuScreen extends class_437 implements QuickImports {
       double[] transformed = this.transformMouseCoords(mouseX, mouseY);
       this.lastTransformedMouseX = transformed[0];
       this.lastTransformedMouseY = transformed[1];
-      // Глубокий затемняющий оверлей всего экрана с лёгким неоновым отливом (cyber-атмосфера):
-      // верх — чёрный с синим тоном, низ — чистый чёрный, прозрачность растёт вместе с анимацией.
-      float dimAlpha = 120.0F * this.getScaleAnimation();
+      // Мягкое нейтральное затемнение всего экрана под стеклянными панелями,
+      // прозрачность растёт вместе с анимацией открытия.
+      float dimAlpha = 105.0F * this.getScaleAnimation();
       rectangle.render(
          ShapeProperties.create(context.method_51448(), 0.0, 0.0, window.method_4486(), window.method_4502())
             .color(
-               Calculate.applyOpacity(new java.awt.Color(6, 8, 16).getRGB(), dimAlpha),
+               Calculate.applyOpacity(new java.awt.Color(4, 6, 10).getRGB(), dimAlpha),
                Calculate.applyOpacity(new java.awt.Color(0, 0, 0).getRGB(), dimAlpha),
-               Calculate.applyOpacity(new java.awt.Color(10, 6, 18).getRGB(), dimAlpha),
+               Calculate.applyOpacity(new java.awt.Color(7, 8, 13).getRGB(), dimAlpha),
                Calculate.applyOpacity(new java.awt.Color(0, 0, 0).getRGB(), dimAlpha)
             )
             .build()

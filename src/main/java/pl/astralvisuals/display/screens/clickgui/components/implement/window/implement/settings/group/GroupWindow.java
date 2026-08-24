@@ -16,7 +16,7 @@ import pl.astralvisuals.features.module.setting.implement.GroupSetting;
 import pl.astralvisuals.utils.display.color.ColorAssist;
 import pl.astralvisuals.utils.display.font.Fonts;
 import pl.astralvisuals.utils.display.scissor.ScissorAssist;
-import pl.astralvisuals.utils.display.shape.ShapeProperties;
+import pl.astralvisuals.utils.display.style.GlassStyle;
 import pl.astralvisuals.utils.math.calc.Calculate;
 
 public class GroupWindow extends AbstractWindow {
@@ -33,20 +33,7 @@ public class GroupWindow extends AbstractWindow {
       class_4587 matrix = context.method_51448();
       ScissorAssist scissorManager = Force.getInstance().getScissorManager();
       this.height = class_3532.method_15340(this.getComponentHeight(), 0, 200);
-      rectangle.render(
-         ShapeProperties.create(matrix, this.x, this.y, this.width + 30.0F, this.height)
-            .round(4.0F)
-            .softness(2.0F)
-            .thickness(1.0F)
-            .outlineColor(new Color(75, 75, 75, 255).getRGB())
-            .color(
-               new Color(14, 14, 16, 255).getRGB(),
-               new Color(31, 27, 35, 255).getRGB(),
-               new Color(31, 27, 35, 255).getRGB(),
-               new Color(14, 14, 16, 255).getRGB()
-            )
-            .build()
-      );
+      GlassStyle.strongBackdrop(matrix, this.x, this.y, this.width + 30.0F, this.height, 9.0F);
       Fonts.getSize(15, Fonts.Type.SEMI)
          .drawGradientString(
             context.method_51448(),
