@@ -14,6 +14,7 @@ public final class DefaultCommands {
          Arrays.asList(
             new ConfigCommand(main),
             new MacroCommand(main),
+            new AutoCommand(main),
             new HelpCommand(main),
             new BindCommand(main),
             new WayCommand(main),

@@ -10,6 +10,7 @@ import net.minecraft.class_310;
 import net.minecraft.class_320;
 import pl.astralvisuals.commands.CommandDispatcher;
 import pl.astralvisuals.commands.manager.CommandRepository;
+import pl.astralvisuals.common.repository.autocommand.AutoCommandRepository;
 import pl.astralvisuals.common.repository.macro.MacroRepository;
 import pl.astralvisuals.common.repository.way.WayRepository;
 import pl.astralvisuals.display.screens.clickgui.MenuScreen;
@@ -45,6 +46,7 @@ public class Force implements ModInitializer {
    private CommandDispatcher commandDispatcher;
    private MacroRepository macroRepository = new MacroRepository(this.eventManager);
    private WayRepository wayRepository = new WayRepository(this.eventManager);
+   private AutoCommandRepository autoCommandRepository = new AutoCommandRepository(this.eventManager);
    private ModuleProvider moduleProvider;
    private DraggableRepository draggableRepository;
    private FileRepository fileRepository;
@@ -268,6 +270,10 @@ public class Force implements ModInitializer {
 
    public WayRepository getWayRepository() {
       return this.wayRepository;
+   }
+
+   public AutoCommandRepository getAutoCommandRepository() {
+      return this.autoCommandRepository;
    }
 
    public ModuleProvider getModuleProvider() {

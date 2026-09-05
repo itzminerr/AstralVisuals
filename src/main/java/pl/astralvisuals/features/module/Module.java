@@ -52,14 +52,14 @@ public class Module extends SettingRepository implements QuickImports {
       if (mc.field_1724 != null && mc.field_1687 != null) {
          if (this.state) {
             if (Interface.getInstance().notificationSettings.isSelected("Переключение модулей")) {
-               Notifications.getInstance().addList("Модуль " + class_124.field_1080 + this.visibleName + class_124.field_1070 + " включен", 2000L, null);
+               Notifications.getInstance().addList("Модуль " + class_124.field_1080 + this.visibleName + class_124.field_1070 + " включен", 4000L, null);
                SoundManager.playSound(SoundManager.ENABLE_MODULE, volume, 1.0F);
             }
 
             this.activate();
          } else {
             if (Interface.getInstance().notificationSettings.isSelected("Переключение модулей")) {
-               Notifications.getInstance().addList("Модуль " + class_124.field_1080 + this.visibleName + class_124.field_1070 + " выключен", 2000L, null);
+               Notifications.getInstance().addList("Модуль " + class_124.field_1080 + this.visibleName + class_124.field_1070 + " выключен", 4000L, null);
                SoundManager.playSound(SoundManager.DISABLE_MODULE, volume, 1.0F);
             }
 

@@ -11,7 +11,7 @@ import net.minecraft.class_408;
 import net.minecraft.class_4587;
 import pl.astralvisuals.common.animation.Animation;
 import pl.astralvisuals.common.animation.Direction;
-import pl.astralvisuals.common.animation.implement.OutBack;
+import pl.astralvisuals.common.animation.implement.InOutCirc;
 import pl.astralvisuals.events.container.SetScreenEvent;
 import pl.astralvisuals.events.packet.PacketEvent;
 import pl.astralvisuals.utils.client.Instance;
@@ -123,7 +123,7 @@ public class Notifications extends AbstractDraggable {
 
    public void addList(class_2561 text, long removeTime, class_3414 sound) {
       this.list
-         .add(new Notifications.Notification(text, new OutBack().setMs(400).setValue(1.0), System.currentTimeMillis(), System.currentTimeMillis() + removeTime));
+         .add(new Notifications.Notification(text, new InOutCirc().setMs(400).setValue(1.0), System.currentTimeMillis(), System.currentTimeMillis() + removeTime));
       if (this.list.size() > 12) {
          this.list.removeFirst();
       }
